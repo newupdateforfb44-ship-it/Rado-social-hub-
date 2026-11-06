@@ -49,3 +49,40 @@ table{width:100%;border-collapse:collapse}th{font-size:15px;letter-spacing:.5px;
 .copy{display:flex;gap:8px}.copy input{flex:1}
 
 .authwrap .logo{margin:6px 0 20px}.authwrap .logo img{width:170px;height:170px}
+
+/* ===== Size + speed fixes (match billionzlogs reference) ===== */
+body{font-size:15px}
+.topbar{height:56px;padding:0 14px}
+.logo img{width:42px;height:42px}
+.burger{width:46px;height:36px;font-size:20px}
+.drawer{z-index:50;padding:18px 18px 110px;transform:translateX(-14%);opacity:0;visibility:hidden;pointer-events:none;transition:transform .16s ease-out,opacity .16s ease-out,visibility 0s linear .16s}
+.drawer.open{transform:none;opacity:1;visibility:visible;pointer-events:auto;transition:transform .16s ease-out,opacity .16s ease-out,visibility 0s}
+.drawer .x{right:18px;top:14px;font-size:20px}
+.drawer .logo{margin:36px 0 14px 12px}.drawer .logo img{width:56px;height:56px}
+.nav a,.nav button.nv{gap:18px;padding:11px 14px;font-size:15px}
+.nav .ic{width:20px;font-size:16px}
+.sub{padding-left:38px}.sub a{font-size:14px;padding:10px 14px}
+main{padding:16px 16px 110px}
+h1{font-size:22px;margin:6px 0 16px}
+.card{padding:16px;margin-bottom:16px}
+.card h2{font-size:20px;margin:0 0 12px}
+.stat{gap:16px}.stat .ico{width:76px;height:76px;font-size:28px}.stat small{font-size:16px}.stat b{font-size:24px;margin:4px 0 8px}
+.btn{padding:9px 14px;font-size:14px}.btn.block{padding:11px}
+.bar{padding:11px 16px;font-size:16px;margin:16px 0 10px}
+label{font-size:15px;margin:14px 0 6px}
+input,select,textarea{padding:11px 13px;font-size:15px}
+.row .addon{padding:11px 13px}
+.alert{font-size:15px;padding:14px 16px}
+.item{gap:14px}.item img,.item .pic{width:64px;height:64px;font-size:24px}
+.item h3{font-size:16px;margin:0 0 5px}.item p{font-size:14px;margin:4px 0}
+.promo{border-radius:20px;padding:24px 18px;margin:16px 0}.promo h2{font-size:21px}.promo p{font-size:14px;margin:0 0 16px}.promo div{font-size:40px!important}
+th{font-size:12px;padding:9px 8px}td{padding:9px 8px;font-size:14px}
+.empty{font-size:20px;padding:34px 0}
+.pill{font-size:12px}
+.fab{width:52px;height:52px;bottom:18px;z-index:70;font-size:26px}
+.fab.wa{left:16px}.fab.tg{right:16px}
+.userchip{position:fixed;bottom:22px;right:16px;z-index:65;display:flex;align-items:center;gap:8px;background:var(--sand);color:#1f2937;border-radius:10px;padding:8px 66px 8px 12px;font-size:14px;max-width:62vw;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.userchip #uname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.authwrap .foot{font-size:15px}.authwrap .logo img{width:120px;height:120px}
+.chk label{font-size:15px}.warnbox ol{font-size:15px}
+@media(min-width:720px){.fab{width:56px;height:56px}h1{font-size:24px}}
