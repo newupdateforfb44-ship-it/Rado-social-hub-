@@ -48,3 +48,36 @@ a{color:#2a9fd8}
 .lock-role-tab.active{background:#202a3b !important;color:#fff !important;background-image:none !important}
 .lock-role-tab.active *{color:#fff !important}
 .topbar span[class*="badge"],.topbar .role-badge,.topbar .pill{background:#38b6f2 !important;color:#fff !important;border:0 !important}
+
+/* ═══ READABILITY FIX (admin) — dark text on white cards, visible boxes ═══ */
+html body .sec,html body .tab-panel .sec,html body .modal-box{background:#ffffff !important;color:#1f2937 !important;border:1px solid #e5e7eb !important}
+html body .sec-title,html body .tab-panel .sec-title,html body .modal-title{color:#1b86c4 !important;border-bottom-color:#e5e7eb !important;background:transparent !important}
+html body .sec-title *,html body .modal-title *{color:inherit !important}
+/* labels, names, small text */
+html body .tab-panel label,html body .tab-panel .fg label,html body .modal-box label,html body .form-row label{color:#1f2937 !important;font-weight:600 !important;opacity:1 !important}
+html body .tab-panel td,html body .tab-panel td b,html body .tab-panel td strong,html body .tab-panel td div,html body .tab-panel p,html body .tab-panel li,html body .tab-panel b,html body .tab-panel strong,html body .modal-box p,html body .modal-box b{color:#1f2937 !important;opacity:1 !important}
+html body .tab-panel small,html body .tab-panel td small,html body .tab-panel .muted,html body .tab-panel [style*="var(--t2)"],html body .tab-panel [style*="var(--t3)"]{color:#475569 !important;opacity:1 !important}
+html body .tab-panel th{background:#eef1f4 !important;color:#334155 !important;opacity:1 !important}
+html body .tab-panel td,html body .tab-panel th{border-bottom:1px solid #e5e7eb !important}
+html body .tab-panel tr:hover td{background:#f7f8fa !important}
+html body .tab-panel .info-box,html body .tab-panel .info-box *{color:#7a5a2b !important}
+html body .tab-panel .sc-val{color:#1f2937 !important}
+html body .tab-panel .sc-lbl{color:#475569 !important}
+html body .tab-panel .pm-row-title{color:#1f2937 !important}
+/* input / select / textarea boxes: white, dark text, clear border */
+html body .tab-panel input:not([type=checkbox]):not([type=radio]),html body .tab-panel select,html body .tab-panel textarea,html body .modal-box input:not([type=checkbox]):not([type=radio]),html body .modal-box select,html body .modal-box textarea{
+  background-color:#ffffff !important;background-image:none !important;color:#1f2937 !important;-webkit-text-fill-color:#1f2937 !important;
+  border:1px solid #b8c2d0 !important;border-radius:10px !important;opacity:1 !important}
+html body .tab-panel select,html body .modal-box select{
+  appearance:none !important;-webkit-appearance:none !important;padding-right:38px !important;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231f2937' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+  background-repeat:no-repeat !important;background-position:right 14px center !important}
+html body select option,html body select optgroup{background:#ffffff !important;color:#1f2937 !important}
+html body .tab-panel input::placeholder,html body .tab-panel textarea::placeholder{color:#64748b !important;-webkit-text-fill-color:#64748b !important;opacity:1 !important}
+html body .tab-panel input:focus,html body .tab-panel select:focus,html body .tab-panel textarea:focus{border-color:#2a9fd8 !important;box-shadow:0 0 0 3px rgba(56,182,242,.25) !important;outline:none !important}
+html body .tab-panel input[type=checkbox],html body .tab-panel input[type=radio]{accent-color:#2a9fd8;opacity:1 !important}
+/* buttons */
+html body .tab-panel .btn-sm,html body .modal-box .btn-sm{background:#ffffff !important;color:#1f2937 !important;border:1px solid #b8c2d0 !important;font-weight:600 !important}
+html body .tab-panel .btn-sm[style*="var(--red)"],html body .tab-panel .btn-sm[onclick*="Reset"],html body .tab-panel .btn-sm[onclick*="Delete"],html body .tab-panel .btn-danger{background:#e5484d !important;color:#ffffff !important;border:0 !important}
+html body .tab-panel .btn-gold,html body .tab-panel .btn-primary,html body .modal-box .btn-gold{background:#202a3b !important;color:#ffffff !important}
+html body .tab-panel .btn-secondary{background:#ffffff !important;color:#1f2937 !important;border:1px solid #b8c2d0 !important}
