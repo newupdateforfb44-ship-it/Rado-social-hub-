@@ -1,0 +1,67 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMS Numbers — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"></head><body><main id="app"><h1>Buy SMS Number</h1>
+<div class="card warnbox"><h2>Important Notice <span style="color:#e0a64b;font-size:18px">▾</span></h2><ol>
+<li>For WhatsApp verification, please delete any modified or unofficial WhatsApp versions and install the official WhatsApp app only.</li>
+<li>After setup, enable Two-Factor Authentication (2FA) on your WhatsApp account for better security.</li>
+<li>Save contacts before sending messages to ensure proper delivery and easier communication.</li>
+<li>If using Telegram, delete old versions and install the latest official app before use.</li>
+<li>Turn on your VPN and select the same country location as the number or service you purchased before using Telegram.</li>
+<li>Always keep your apps updated to avoid verification or login issues.</li>
+<li>Failure to follow these steps may cause verification delays or account restrictions.</li></ol>
+<p style="font-size:20px">Please keep in mind that these are all <b>temporary phone numbers</b>.</p><hr style="border:0;border-top:1px solid #ccc;margin:22px 0">
+<h2>Purchase Number</h2><div id="bm" class="msg"></div>
+<label>1. Select Country</label><input id="cq" placeholder="Search country (e.g. United States)" style="margin-bottom:10px"><select id="country"><option value="">Loading countries…</option></select>
+<label>2. Select Service</label><input id="sq" placeholder="Search service (e.g. WhatsApp)" style="margin-bottom:10px"><select id="service" disabled><option value="">Select a country first</option></select>
+<label>3. Choose Pool</label><div id="pools" class="muted" style="font-size:18px;margin-bottom:6px">Choose a country and a service first.</div>
+<div id="sum" class="card" style="display:none;margin:14px 0 0"></div>
+<br><button class="btn block" id="buy" disabled>🛒&nbsp; Confirm &amp; Buy Number</button></div>
+<div id="active"></div>
+<div class="card"><h2>Orders</h2><div id="ords"></div></div></main><script src="/rado/rado.js"></script><script>(async()=>{const user=await initShell('SMS Numbers',{title:'SMS Numbers'});if(!user)return;let svcs=[],ctys=[],pool=null,seq=0;
+const optList=(list,ph)=>`<option value="">${ph}</option>`+list.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+function drawCty(){const q=$('#cq').value.trim().toLowerCase(),keep=$('#country').value;const v=ctys.filter(c=>!q||c.name.toLowerCase().includes(q));
+ $('#country').innerHTML=v.length?optList(v,'Select country'):'<option value="">No country found</option>';if(keep&&v.some(c=>c.id===keep))$('#country').value=keep}
+function drawSvc(){const q=$('#sq').value.trim().toLowerCase(),keep=$('#service').value;const v=svcs.filter(s=>!q||s.name.toLowerCase().includes(q));
+ $('#service').disabled=!$('#country').value;
+ $('#service').innerHTML=!$('#country').value?'<option value="">Select a country first</option>':(v.length?optList(v,'Select service'):'<option value="">No service found</option>');
+ if(keep&&v.some(s=>s.id===keep))$('#service').value=keep}
+// Fast start: show the last saved lists instantly, then refresh both lists at the same time.
+const LS=(k)=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const c0=LS('rsh_ctys'),s0=LS('rsh_svcs');
+if(c0&&c0.length){ctys=c0;$('#country').innerHTML=optList(ctys,'Select country')}
+if(s0&&s0.length){svcs=s0;drawSvc()}
+await Promise.all([
+ api('/api/rado/numbers/countries').then(v=>{ctys=v;SV('rsh_ctys',v);const keep=$('#country').value;drawCty();if(keep&&ctys.some(c=>c.id===keep))$('#country').value=keep}).catch(()=>{if(!ctys.length)$('#country').innerHTML='<option value="">Numbers unavailable right now</option>'}),
+ api('/api/rado/numbers/services').then(v=>{svcs=v;SV('rsh_svcs',v);drawSvc()}).catch(()=>{})
+]);
+function resetPool(msg){pool=null;$('#buy').disabled=true;$('#sum').style.display='none';$('#pools').className='muted';$('#pools').innerHTML=msg}
+function pickPool(p){pool=p;
+ document.querySelectorAll('#pools .pool').forEach(el=>{const on=el.dataset.id===p.id;el.style.borderColor=on?'#16a34a':'#9ca3af';el.style.background=on?'#ecfdf3':'transparent';el.style.color=on?'#14532d':'inherit'});
+ const cn=$('#country').selectedOptions[0].textContent,sn=$('#service').selectedOptions[0].textContent;
+ $('#sum').style.display='block';
+ $('#sum').innerHTML=`<h2 style="margin-top:0">Order summary</h2><p style="font-size:20px;margin:6px 0">Country: <b>${esc(cn)}</b></p><p style="font-size:20px;margin:6px 0">Service: <b>${esc(sn)}</b></p><p style="font-size:20px;margin:6px 0">Pool: <b>${esc(p.name)}</b></p><p style="font-size:22px;margin:10px 0 0">Price: <b>${naira(p.price)}</b></p>`;
+ $('#buy').disabled=false}
+async function loadPools(){const s=$('#service').value,c=$('#country').value;
+ if(!c){resetPool('Choose a country and a service first.');return}
+ if(!s){resetPool('Now choose a service.');return}
+ const my=++seq;resetPool('Loading available pools…');
+ try{const list=await api('/api/rado/numbers/pools?service='+encodeURIComponent(s)+'&country='+encodeURIComponent(c));if(my!==seq)return;
+  if(!list.length){resetPool('No number is available for this service in this country right now. Try another country or service.');return}
+  $('#pools').className='';
+  $('#pools').innerHTML=list.map(p=>`<button type="button" class="btn white pool" data-id="${esc(p.id)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;margin:0 0 8px;border:2px solid #9ca3af;text-align:left"><span>${esc(p.name)}${p.rate?' <small style="opacity:.7">· '+esc(p.rate)+'</small>':''}${p.stock!=null?' <small style="opacity:.7">· '+esc(String(p.stock))+' available</small>':''}</span><b>${naira(p.price)}</b></button>`).join('');
+  document.querySelectorAll('#pools .pool').forEach((el,i)=>el.onclick=()=>pickPool(list[i]));
+  if(list.length===1)pickPool(list[0])}
+ catch(e){if(my!==seq)return;resetPool(esc(e.message))}}
+$('#cq').oninput=drawCty;$('#sq').oninput=()=>{drawSvc();loadPools()};
+$('#country').onchange=()=>{drawSvc();loadPools()};$('#service').onchange=loadPools;
+$('#buy').onclick=async()=>{const m=$('#bm');m.className='msg';
+ if(!pool)return;if(!await askConfirm('The amount will be deducted from your wallet balance.',{title:'Confirm purchase',okText:'Pay '+naira(pool.price),rows:[['Number',pool.name||'SMS number'],['Price',naira(pool.price)]]}))return;$('#buy').disabled=true;
+ try{const d=await api('/api/rado/numbers/buy','POST',{country:$('#country').value,service:$('#service').value,pool:pool.id,expectedPrice:pool.price});
+  if(d.pending){m.textContent=d.message;m.className='msg err';return}
+  m.textContent='Number purchased: '+d.phoneNumber;m.className='msg ok';poll(d.orderId);loadOrders2();loadPools()}
+ catch(e){if(!e.shown)notify(e.message,'err');$('#buy').disabled=!pool}};
+let timer;function poll(id){clearInterval(timer);const tick=async()=>{try{const s=await api('/api/rado/numbers/status/'+id);
+ $('#active').innerHTML=`<div class="card"><h2>Your number</h2><div class="copy"><input readonly value="${esc(s.phoneNumber)}"><button class="btn" onclick="navigator.clipboard.writeText('${esc(s.phoneNumber)}')">Copy</button></div><p style="font-size:20px">${esc(s.service||'')} · ${esc(s.country||'')}</p><p style="font-size:22px"><b>${s.code?'Code: '+esc(s.code):'Waiting for SMS…'}</b></p>${s.code?'':'<button class="btn white" style="border:1px solid #9ca3af" id="cx">Cancel &amp; refund</button>'}</div>`;
+ const cx=$('#cx');if(cx)cx.onclick=async()=>{try{await api('/api/rado/numbers/cancel/'+id,'POST');clearInterval(timer);tick();loadOrders2()}catch(e){alert(e.message)}};
+ if(s.code||['cancelled','expired'].includes(s.status)){clearInterval(timer);loadOrders2()}}catch(e){}};tick();timer=setInterval(tick,5000)}
+async function loadOrders2(){try{const o=await api('/api/rado/numbers/my-orders');$('#ords').innerHTML=o.length?`<div class="scroll"><table><thead><tr><th>Number</th><th>Country</th><th>Status</th><th>Code</th></tr></thead><tbody>${o.slice(0,20).map(x=>`<tr><td>${esc(x.phoneNumber)}</td><td>${esc(x.country)}</td><td><span class="pill ${esc(x.status)}">${esc(x.status)}</span></td><td>${esc(x.code||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No orders yet</div>'}catch(e){$('#ords').innerHTML='<div class="empty">No orders yet</div>'}}
+loadOrders2();})();</script></body></html>
