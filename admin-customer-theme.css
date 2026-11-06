@@ -1,0 +1,50 @@
+/* Admin panel = same colours as the customer panel (rado.css). Loaded last. No loaders / spinners. */
+html,html[data-theme],html[data-theme="light"],html[data-theme="dark"],:root{
+  --bg:#f1f3f5 !important;--bg2:#202a3b !important;--bg3:#ffffff !important;--bg4:#eef1f4 !important;
+  --card:#ffffff !important;--card2:#f7f8fa !important;
+  --border:#e5e7eb !important;--border2:#d5d9e0 !important;
+  --t1:#1f2937 !important;--t2:#475569 !important;--t3:#64748b !important;
+  --gold:#38b6f2 !important;--gold2:#2a9fd8 !important;--gold3:#38b6f2 !important;
+  --blue:#38b6f2 !important;--green:#2fc08e !important;--accent:#38b6f2 !important;--primary:#38b6f2 !important;--red:#e5484d !important;
+  --kb-control:#ffffff !important;--kb-surface:#ffffff !important;--kb-glass:#ffffff !important;--kb-ink:#1f2937 !important;
+  --rsh-navy:#202a3b !important;--rsh-card:#ffffff !important;--rsh-ink:#1f2937 !important;--rsh-muted:#64748b !important;
+}
+html,body{background:#f1f3f5 !important;color:#1f2937 !important;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif !important}
+body::before,body::after{display:none !important}
+/* header + side menu = customer top bar / drawer colour */
+.topbar,.sidebar{background:#202a3b !important;border-color:#2f3a4d !important;color:#e5e7eb !important;box-shadow:none !important}
+.topbar *,.sidebar *{color:inherit}
+.sidebar a,.sidebar button,.sidebar .nav-item,.sidebar .ni{color:#e5e7eb !important;background:transparent !important;border-radius:8px}
+.sidebar .active,.sidebar .on,.sidebar a:hover,.sidebar button:hover,.sidebar .nav-item.active,.sidebar .ni.active{background:#374151 !important;color:#fff !important}
+/* cards, boxes, tables, inputs */
+.card,.stat,.stat-card,.box,.panel,.modal,.modal-box,.mbox,.info-box,.section,.sc,.kpi,.tile,.item,table,.tbl,.table-wrap{
+  background:#ffffff !important;color:#1f2937 !important;border:1px solid #e5e7eb !important;box-shadow:0 1px 4px rgba(0,0,0,.08) !important;background-image:none !important}
+th{background:#f7f8fa !important;color:#64748b !important}
+td,th{border-color:#e5e7eb !important;color:#1f2937}
+input,select,textarea{background:#ffffff !important;color:#1f2937 !important;border:1px solid #d5d9e0 !important;border-radius:8px !important}
+input::placeholder,textarea::placeholder{color:#94a3b8 !important}
+h1,h2,h3,h4,label,p,span,div,td,li{text-shadow:none !important}
+h1,h2,h3,h4{color:#1f2937 !important}
+.muted,small,.sub,.hint{color:#64748b !important}
+.info-box{background:#fcf3e4 !important;color:#8a6a3b !important;border-color:#f0be78 !important}
+/* buttons = customer dark button; accent for primary */
+.btn-gold,.btn,.btn-primary,button.primary{background:#202a3b !important;color:#fff !important;border:0 !important;box-shadow:none !important;background-image:none !important}
+.btn-gold:hover,.btn:hover{background:#374151 !important}
+.btn-ghost,.btn-outline,.btn-sm{background:#fff !important;color:#1f2937 !important;border:1px solid #d5d9e0 !important}
+a{color:#2a9fd8}
+/* login gate */
+#loginScreen,.login-screen,.login-wrap,#loginWrap{background:#f1f3f5 !important}
+.login-card,.login-box{background:#fff !important;border:1px solid #e5e7eb !important;box-shadow:0 1px 4px rgba(0,0,0,.08) !important;color:#1f2937 !important}
+/* NO loading effects of any kind */
+.spin,.spinner,.loader,#rsh-loader,#rsh-page-transition,.dbfl-overlay,#dbfl-overlay,#pgLoad,.rsh-dots,.skeleton{display:none !important}
+*,*::before,*::after{animation:none !important}
+/* leftovers */
+#passInput,.fg input,.lock-card input,.login-card input{background:#fff !important;color:#1f2937 !important;border:1px solid #d5d9e0 !important}
+.adm-hamburger,.topbar .btn-sm,.topbar button{background:transparent !important;color:#fff !important;border:1px solid #3b4658 !important;box-shadow:none !important;border-radius:8px !important}
+.adm-hamburger *,.topbar .btn-sm *{color:#fff !important}
+.adm-current{background:#202a3b !important;border-color:#2f3a4d !important;color:#fff !important}
+.adm-current *,.adm-current .adm-current-hint{color:#cbd5e1 !important}
+.lock-role-tab{background:transparent !important;color:#475569 !important;box-shadow:none !important}
+.lock-role-tab.active{background:#202a3b !important;color:#fff !important;background-image:none !important}
+.lock-role-tab.active *{color:#fff !important}
+.topbar span[class*="badge"],.topbar .role-badge,.topbar .pill{background:#38b6f2 !important;color:#fff !important;border:0 !important}

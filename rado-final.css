@@ -1,0 +1,63 @@
+/* ═══ RADO SOCIAL HUB — final pass (loads after every other stylesheet) ═══════════
+   Navy + electric blue + red everywhere. No white surfaces, no invisible text. */
+:root{--f-ink:#eef3ff;--f-muted:#a9bbe3;--f-card:#0f1b44;--f-card2:#13235a;--f-deep:#0a1433;--f-line:rgba(90,150,255,.28);--f-blue:#1a6dff;--f-cyan:#19c3ff;--f-red:#ff2a4d}
+
+/* 1. Every card-like surface that earlier sheets left white (service rows, tiles, sheets, banners, popups) */
+.svc,.tile,.select-tile,.srv-card,.srv-search,.order,.order.active-order,.active-card,.how-card,.wrap .card,.wrap .how-card,
+.notice,.message,.mx-sheet,.mx-modal .mx-sheet,.kui-banner,.kui-confirm,.rsh-sheet,.rsh-sheet a,.dsh-toast,
+.sfab-menu,.sfab-panel,.dsh-support-fab,.support-fab-panel,.m4-cartbar,.m4-keys,.hm-tab,.rsh-mk-item,.rsh-mk-ph,#pgLoad,
+.auth-card,.auth-box,.gbtn,.google-btn-link{
+  background:linear-gradient(145deg,var(--f-card),#0b1637) !important;color:var(--f-ink) !important;border:1px solid var(--f-line) !important}
+.svc:hover,.tile:hover,.select-tile:hover{border-color:var(--f-cyan) !important;box-shadow:0 0 0 1px rgba(25,195,255,.35),0 8px 24px rgba(26,109,255,.3) !important}
+
+/* 2. Text inside those surfaces must always be readable */
+.svc *,.tile *,.select-tile *,.order *,.active-card *,.how-card *,.notice,.message,.mx-sheet *,.kui-banner *,.kui-confirm *,.rsh-sheet *,.m4-cartbar *,.rsh-mk-item *,.auth-card *,.auth-box *{color:var(--f-ink)}
+.svc b,.svc strong,.tile b,.order b{color:var(--f-ink) !important}
+.svc .m,.svc small,.tile small,.order small,.muted,.sub,.mx-sheet p,.mx-row small,.notice small,.message small{color:var(--f-muted) !important}
+.svc .p,.svc .p *:not(.m){color:var(--f-cyan) !important}
+.svc .p .m{color:var(--f-muted) !important}
+.svc .big,.svc .ph,.svc-blue,.svc-emerald{background:rgba(26,109,255,.22) !important;color:#9fd2ff !important}
+#pgLoad{background:rgba(5,11,34,.94) !important}
+#pgLoad *{color:var(--f-ink) !important}
+
+/* 3. Floating sheets / popups */
+.mx-sheet{border:1px solid var(--f-line) !important}
+.mx-row{border-top-color:var(--f-line) !important;color:var(--f-ink) !important}
+.mx-row b{color:var(--f-ink) !important}
+.mx-in{background:var(--f-deep) !important;color:var(--f-ink) !important;border:1px solid var(--f-line) !important}
+.mx-sec{background:var(--f-card2) !important;color:var(--f-ink) !important}
+.mx-pri{background:linear-gradient(115deg,#0f4fd6,#1a6dff) !important;color:#fff !important}
+.mx-h{color:#ff6b84 !important}
+.mx-x{color:var(--f-ink) !important}
+.mx-new{background:rgba(255,42,77,.14) !important}
+
+/* 4. Status colours that stay readable on navy */
+.message.ok,.notice.ok{border-color:rgba(25,195,255,.55) !important;color:#bff0ff !important}
+.message.err,.message.error,.notice.err{border-color:rgba(255,42,77,.6) !important;color:#ffb3c0 !important;background:rgba(255,42,77,.12) !important}
+
+/* 5. Anything dark-on-dark from inline styles */
+[style*="color:#0b1b3a"],[style*="color:#060d2b"],[style*="color:#0f172a"],[style*="color:#1e293b"],[style*="color:#334155"],[style*="color:#444"],[style*="color:#555"],[style*="color:#666"]{color:var(--f-ink) !important}
+select option,select optgroup{background:var(--f-deep) !important;color:var(--f-ink) !important}
+table,tr,td,th{color:var(--f-ink)}
+label,legend,.field label{color:var(--f-ink) !important}
+input:disabled,select:disabled,textarea:disabled{opacity:.7;color:var(--f-muted) !important}
+:focus-visible{outline:2px solid var(--f-cyan);outline-offset:2px}
+
+/* 6. Blue + red balance: red for danger / highlight, blue for primary */
+button.danger,.danger,.btn-danger{background:linear-gradient(115deg,#d9143a,#ff2a4d) !important;color:#fff !important;border-color:#ff2a4d !important}
+.submit,.fpbtn,button[type=submit]:not(.toggle){background:linear-gradient(100deg,#0f4fd6,#1a6dff 60%,#19c3ff) !important;color:#fff !important}
+a{color:#7cc2ff}
+
+/* 7. Floating buttons: stack them so none covers another.
+      support (bottom ~78-148) → search → bell */
+.mx-fab{background:linear-gradient(145deg,#13235a,#0a1433) !important;border:1px solid var(--f-line) !important;color:#fff !important}
+.mx-badge{background:var(--f-red) !important;color:#fff !important}
+
+/* 8. Sign in / sign up: brand name at the top, fitted */
+body:has(.brand h1){align-items:flex-start !important;padding-top:max(14px,env(safe-area-inset-top)) !important}
+.brand{margin-bottom:16px !important}
+.brand .crown{width:auto !important;max-width:150px;height:76px !important;margin:0 auto 6px !important}
+.brand h1{font-size:clamp(24px,7.4vw,32px) !important;height:auto !important;overflow:visible !important;line-height:1.1 !important;letter-spacing:.14em !important;font-weight:900 !important;text-align:center;margin:0 0 4px !important;color:var(--f-ink) !important;white-space:nowrap}
+.brand h1 span{background:none !important;-webkit-text-fill-color:var(--f-red) !important;color:var(--f-red) !important}
+.brand p{color:var(--f-muted) !important;margin:4px 0 0 !important}
+.foot,p.foot{color:var(--f-muted) !important}

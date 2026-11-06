@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"></head><body><div class="authwrap"><a class="logo" href="/"><img src="/rado/rado-logo.png" alt="Rado Social Hub"></a>
+<div class="card"><h2>Sign in</h2><div id="m" class="msg"></div>
+<form id="f"><label>Your Email</label><input id="email" type="email" autocomplete="email" required>
+<label>Your Password</label><input id="pw" type="password" autocomplete="current-password" required>
+<div class="chk"><label><input type="checkbox" id="rm">Remember me</label><a href="#" id="lost">Lost password?</a></div>
+<button class="btn block" id="go">Sign in</button></form>
+<div class="foot">Not registered? <a href="/register">Create account</a></div></div></div>
+<script src="/rado/rado.js"></script><script>
+if(token())location.replace('/dashboard');
+$('#lost').onclick=async e=>{e.preventDefault();const l=await fetch('/api/public/site-links').then(r=>r.json()).catch(()=>({}));const w=l.whatsappChatLink||(l.whatsappNumber&&'https://wa.me/'+l.whatsappNumber);if(w)location.href=w;else alert('Please contact support to reset your password.')};
+$('#f').onsubmit=async e=>{e.preventDefault();const m=$('#m');m.className='msg';$('#go').disabled=true;
+try{const d=await api('/api/auth/login','POST',{email:$('#email').value.trim(),password:$('#pw').value});saveSession(d);location.replace('/dashboard')}
+catch(er){m.textContent=er.message;m.className='msg err'}finally{$('#go').disabled=false}};
+</script></body></html>

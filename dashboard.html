@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"></head><body><main id="app"><h1 id="hi">Welcome</h1>
+<div class="card stat"><div class="ico">👛</div><div><small>Balance</small><b id="bal">₦0.00</b><a class="btn" href="/deposit">Fund Wallet</a></div></div>
+<div class="card stat"><div class="ico">🛒</div><div><small>Orders</small><b id="oc">0</b></div></div>
+<div class="card stat"><div class="ico">💳</div><div><small>Total Spent</small><b id="ts">₦0.00</b></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Recent Orders</h2><a class="btn" href="/orders">See all</a></div>
+<div class="scroll"><table><thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th></tr></thead><tbody id="rows"></tbody></table></div></div></main><script src="/rado/rado.js"></script><script>(async()=>{const user=await initShell('Dashboard',{title:'Dashboard'});if(!user)return;$('#hi').textContent='Welcome, '+user.name;$('#bal').textContent=naira(user.balance);
+const rows=await loadOrders();$('#oc').textContent=rows.length;$('#ts').textContent=naira(rows.filter(r=>!/cancel|expire|fail/.test(r.status)).reduce((a,r)=>a+Number(r.total||0),0));
+$('#rows').innerHTML=rows.slice(0,5).map(orderRow).join('')||'<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">No orders yet</td></tr>';})();</script></body></html>

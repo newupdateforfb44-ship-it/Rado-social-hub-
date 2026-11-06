@@ -1,0 +1,17 @@
+{
+  "name": "Rado Social Hub",
+  "short_name": "Rado Social Hub",
+  "description": "SMS numbers, social accounts and digital products.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#040a24",
+  "theme_color": "#1a6dff",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/img/rado-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/rado-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/rado-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

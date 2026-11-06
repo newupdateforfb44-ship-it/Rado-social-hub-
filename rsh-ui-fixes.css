@@ -1,0 +1,35 @@
+/* Rado Social Hub — menu above the Back bar + normal-size close (X) buttons */
+
+/* 1. Hamburger menu + dim backdrop always cover the Back bar (z-index 9990) */
+.rsh-menu-backdrop { z-index: 10005 !important; }
+.rsh-drawer { z-index: 10010 !important; }
+
+/* 2. Close buttons: compact round box, normal-size X */
+.modal-x,
+.rsh-drawer-close,
+.ks-sheet-close,
+.drawer-close,
+.adm-drawer-close,
+.kp-x,
+.gw-win-close {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+.modal-x svg, .modal-x .icon,
+.rsh-drawer-close svg, .ks-sheet-close svg,
+.drawer-close svg, .adm-drawer-close svg, .kp-x svg, .gw-win-close svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 auto;
+}
+/* bare X buttons (no box) */
+.rs-x, .kui-x { font-size: 18px !important; line-height: 1 !important; }

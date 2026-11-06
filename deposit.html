@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fund Naira — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css">
+<style>
+.gws{display:grid;gap:10px;margin:8px 0 14px}
+.gw{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid #2a3550;border-radius:12px;cursor:pointer;background:transparent;color:inherit;font:inherit;text-align:left;width:100%}
+.gw.on{border-color:#1a6dff;background:rgba(26,109,255,.10)}
+.gw .dot{width:18px;height:18px;border-radius:50%;border:2px solid #6b7894;flex:none}
+.gw.on .dot{border-color:#1a6dff;background:radial-gradient(#1a6dff 45%,transparent 50%)}
+.gw b{font-size:20px}.gw small{display:block;opacity:.7;font-size:15px}
+.res{padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:18px}
+.res.ok{background:rgba(34,197,94,.15)}.res.bad{background:rgba(239,68,68,.15)}.res.wait{background:rgba(245,158,11,.15)}
+</style></head><body><main id="app"><h1>Deposit</h1>
+<div id="result"></div>
+<div class="card"><h2>Fund your wallet</h2>
+<div id="body"></div></div></main>
+<script src="/rado/rado.js"></script>
+<script>(async()=>{
+const user=await initShell('Fund Naira',{title:'Fund Naira'});if(!user)return;
+const NAMES={flutterwave:'Flutterwave',paystack:'Paystack',korapay:'Kuropay'};
+const SUB={flutterwave:'Card, bank transfer, USSD & more',paystack:'Card, bank & transfer',korapay:'Card & bank transfer'};
+const q=new URLSearchParams(location.search),dep=q.get('deposit'),txRef=q.get('txRef');
+const R=$('#result');
+const say=(t,c)=>{R.innerHTML='<div class="res '+c+'">'+esc(t)+'</div>'};
+if(dep==='success')say('✅ Payment received — your wallet has been credited.','ok');
+else if(dep==='failed')say('❌ Payment was not completed. Nothing was charged — you can try again.','bad');
+else if(dep==='cancelled')say('Payment cancelled. You can try again any time.','bad');
+else if(dep==='pending'&&txRef){say('⏳ Confirming your payment… this usually takes a few seconds.','wait');
+ let n=0;const t=setInterval(async()=>{n++;try{const s=await api('/api/deposit/paymentlink/status/'+encodeURIComponent(txRef));
+  if(s.status==='success'){clearInterval(t);say('✅ Payment received — your wallet has been credited.','ok')}
+  else if(s.status==='failed'){clearInterval(t);say('❌ Payment failed. Nothing was charged.','bad')}}catch(e){}
+  if(n>=20){clearInterval(t);say('Still confirming. If you were charged, your wallet will be credited automatically — or contact support.','wait')}},3000)}
+if(dep)history.replaceState(null,'','/deposit');
+
+let pm={};try{pm=await api('/api/deposit/payment-methods')}catch(e){}
+const usd=pm.payCurrency==='USD',cur=usd?'$':'₦',min=usd?1:100;
+const gws=pm.gateways||{};
+const pl=pm.paymentlink||{enabled:true};
+const avail=Object.keys(NAMES).filter(k=>gws[k]&&gws[k].available);
+const body=$('#body');
+if(!avail.length||pl.enabled===false){
+ const msg=(pl.enabled===false&&pl.disabledMessage)||Object.keys(gws).map(k=>gws[k].disabledMessage).find(Boolean)||'Online payment is currently unavailable.';
+ body.innerHTML='<div class="alert">'+esc(msg)+'<br>To fund your account, please contact our support team on WhatsApp.</div><button class="btn green block" id="wa">💬&nbsp; Contact Us on WhatsApp</button>';
+ $('#wa').onclick=()=>{const n=(window.RADO_LINKS&&RADO_LINKS.wa)||'';if(!n){alert('Support WhatsApp is not set up yet.');return}
+  window.open(n+(n.includes('?')?'&':'?')+'text='+encodeURIComponent('Hello, I want to fund my Rado Social Hub account ('+user.email+').'),'_blank')};
+ return}
+let pick=avail.includes(pm.defaultGateway)?pm.defaultGateway:avail[0];
+body.innerHTML='<label>Choose payment method</label><div class="gws" id="gws"></div>'+
+ '<label>Amount to deposit ('+cur+')</label><div class="row"><span class="addon">'+cur+'</span><input id="amt" type="number" inputmode="decimal" placeholder="Enter amount"></div>'+
+ '<p class="muted" style="font-size:19px">Minimum deposit: '+cur+min.toLocaleString()+'. A small service fee is added at checkout.</p>'+
+ '<div id="err" class="res bad" style="display:none"></div><button class="btn green block" id="pay">Pay now</button>';
+const draw=()=>{$('#gws').innerHTML=avail.map(k=>'<button type="button" class="gw '+(k===pick?'on':'')+'" data-g="'+k+'"><span class="dot"></span><span><b>'+NAMES[k]+'</b><small>'+SUB[k]+'</small></span></button>').join('');
+ document.querySelectorAll('.gw').forEach(b=>b.onclick=()=>{pick=b.dataset.g;draw()})};
+draw();
+$('#pay').onclick=async()=>{const a=Number($('#amt').value||0),e=$('#err');e.style.display='none';
+ if(!a||a<min){e.textContent='Minimum deposit is '+cur+min.toLocaleString();e.style.display='block';return}
+ const b=$('#pay');b.disabled=true;b.textContent='Redirecting to '+NAMES[pick]+'…';
+ try{const d=await api('/api/deposit/paymentlink/create','POST',{amount:a,gateway:pick});location.href=d.link}
+ catch(x){e.textContent=x.message;e.style.display='block';b.disabled=false;b.textContent='Pay now'}};
+})();</script><script>(async()=>{try{const rows=await api('/api/user/deposit-history');const host=document.querySelector('main#app');if(!host)return;
+const lab={success:['Successful','#2fbf71'],pending:['Pending','#d98e04'],failed:['Not completed','#e5484d']};
+const c=document.createElement('div');c.className='card';
+c.innerHTML='<h2>Recent deposits</h2>'+(!rows.length?'<p class="muted">No deposits yet.</p>':rows.map(r=>{const l=lab[r.status]||lab.pending;
+return '<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(128,128,128,.25)"><span>'+esc(r.method)+'<br><small style="opacity:.65">'+new Date(r.createdAt).toLocaleString()+(r.ref?' · '+esc(r.ref):'')+'</small></span><span style="text-align:right"><b>₦'+Number(r.amount||0).toLocaleString()+'</b><br><small style="color:'+l[1]+'">'+l[0]+'</small></span></div>'}).join(''));
+host.appendChild(c)}catch(e){}})();</script>
+</body></html>

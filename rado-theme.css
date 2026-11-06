@@ -1,0 +1,229 @@
+/* ═══ RADO SOCIAL HUB — Navy + Electric Blue + Red (matches the logo) ═══════════
+   Loaded last on every page. Dark surfaces, light text: no white-on-white.   */
+:root{--rsh-navy:#050b22;--rsh-navy2:#0a1433;--rsh-card:#0f1b44;--rsh-card2:#13235a;--rsh-line:rgba(90,150,255,.22);
+  --rsh-ink:#eef3ff;--rsh-muted:#a3b5dc;--rsh-blue:#1a6dff;--rsh-cyan:#19c3ff;--rsh-red:#ff2a4d;--rsh-red2:#d9143a}
+html,html[data-theme],html[data-theme="light"],html[data-theme="dark"],:root{
+  --kb-control:#13235a !important; --kb-surface:#0f1b44 !important; --kb-glass:rgba(15,27,68,.95) !important; --kb-ink:#eef3ff !important;
+  --bg:#050b22 !important; --bg2:#0a1433 !important; --bg3:#0f1b44 !important; --bg4:#13235a !important;
+  --card:#0f1b44 !important; --card2:#13235a !important;
+  --border:rgba(90,150,255,.22) !important; --border2:rgba(90,150,255,.35) !important;
+  --t1:#eef3ff !important; --t2:#a3b5dc !important; --t3:#7f93c2 !important;
+  --gold:#19c3ff !important; --gold2:#1a6dff !important; --gold3:#7fd0ff !important;
+  --blue:#1a6dff !important; --green:#19c3ff !important; --accent:#1a6dff !important; --primary:#1a6dff !important; --red:#ff2a4d !important;
+  --sh:0 8px 28px rgba(0,0,0,.45) !important; --sh2:0 2px 12px rgba(0,0,0,.35) !important;
+  --text:#eef3ff !important; --text2:#a3b5dc !important; --text3:#7f93c2 !important;
+  --white:#0f1b44 !important; --blue-light:#13235a !important;
+  --app-blue:#1a6dff !important; --app-blue2:#0f4fd6 !important; --app-blue-soft:#13235a !important;
+  --rsh-surface:#0f1b44 !important; --rsh-surface-2:#13235a !important; --rsh-line:rgba(90,150,255,.22) !important;
+  --rsh-text:#eef3ff !important; --rsh-text-muted:#a3b5dc !important; --rsh-accent:#1a6dff !important;
+  --glass-bg:rgba(15,27,68,.9) !important; --glass-bg-hover:#13235a !important;
+  --glass-border:rgba(90,150,255,.25) !important; --glass-border-hover:rgba(25,195,255,.6) !important;
+  --glass-glow:0 6px 18px -12px rgba(26,109,255,.6) !important; --glass-glow-hover:0 10px 24px -10px rgba(26,109,255,.8) !important;
+  --pill-bg:rgba(15,27,68,.96) !important; --pill-border:rgba(90,150,255,.3) !important;
+  --pill-active-bg:rgba(26,109,255,.3) !important; --pill-active-fg:#fff !important; --pill-idle-fg:#a3b5dc !important;
+  color-scheme:dark !important;
+}
+html{background:#050b22 !important}
+body{background:#050b22 !important;background-color:#050b22 !important;color:#eef3ff !important;--kb-ov:none !important;
+  background-image:radial-gradient(ellipse at 0% 0%,rgba(26,109,255,.28),transparent 45%),radial-gradient(ellipse at 100% 100%,rgba(255,42,77,.16),transparent 45%) !important;
+  background-attachment:fixed !important}
+body::before,body::after{background-image:none !important;background:transparent !important}
+
+/* header + nav */
+.navbar,.topbar,.app-header,.sidebar,header.nav,.dsh-topbar{background:rgba(5,11,34,.92) !important;border-color:rgba(90,150,255,.22) !important;color:#eef3ff !important;backdrop-filter:blur(14px)}
+.brand-rsh,.brand-name,.site-brand{background:none !important;-webkit-text-fill-color:#eef3ff !important;color:#eef3ff !important}
+.brand-icon,.dbfl-crown-svg{border-color:rgba(90,150,255,.4) !important;box-shadow:0 2px 14px rgba(26,109,255,.5) !important}
+
+/* surfaces */
+.card,.rsh-card,.stat-card,.panel,.box,.glass,.section-card,.tool-card,.log-card,.prod-card,.modal-content,.settings-card,.wallet-card,
+.modal,.dsh-card,.dsh-section,.pc-card,.review-item,.detail-box,.api-key-box,.rsh-gate-box,.wal-card,.wal-row,
+.wo-card,.dsh-svc-item,.product-card,.market-card,.feature-card,.service-card,.step,.faq-item,.offer-card,.mkt-card,.order-card,.txn-card,.nh-card{
+  background:linear-gradient(145deg,#0f1b44,#0b1637) !important;color:#eef3ff !important;border:1px solid rgba(90,150,255,.22) !important;box-shadow:0 8px 26px rgba(0,0,0,.4) !important}
+.dsh-shell,.app-shell,.main,main,.page,.container{background:transparent !important}
+
+/* text: always light on dark */
+h1,h2,h3,h4,h5,h6,label,li,b,strong,td,th,legend,summary,dt,dd{color:#eef3ff !important}
+p,span,small,div,.sub,.desc,.muted,.txt-muted,.hero-p,.welcome-hero p{color:inherit}
+.card p,.card span,.card small,.dsh-card p,.prod-card p,.muted,.sub,.desc,.hero-p,.welcome-hero p,small{color:#a3b5dc !important;text-shadow:none !important}
+a{color:#5fb0ff}
+a:hover{color:#9fd2ff}
+.hero,.welcome-hero,.hero h1,.welcome-hero h1{color:#eef3ff !important}
+h1 em,h1 span.grad,.hero h1 span,.grad-text,.hero-grad{background:linear-gradient(90deg,#19c3ff,#ff2a4d) !important;-webkit-background-clip:text !important;background-clip:text !important;-webkit-text-fill-color:transparent !important;color:transparent !important}
+
+/* inputs */
+input,textarea,select,.nh-input,.as-search,#passInput,.fg input{background:#0a1433 !important;color:#eef3ff !important;border:1px solid rgba(90,150,255,.35) !important}
+input::placeholder,textarea::placeholder{color:#7f93c2 !important}
+input:focus,select:focus,textarea:focus{border-color:#19c3ff !important;box-shadow:0 0 0 3px rgba(25,195,255,.2) !important;outline:none}
+input[type="file"]{background:#0f1b44 !important}
+option{background:#0a1433 !important;color:#eef3ff !important}
+table,th,td{border-color:rgba(90,150,255,.18) !important}
+th{background:#13235a !important}
+
+/* buttons: blue primary, red accent */
+.btn-primary,.btn-gold,.btn-nav-reg,.hero-cta,.buy-btn,.prod-select-btn,button.primary,.btn-blue{
+  background:linear-gradient(115deg,#0f4fd6,#1a6dff 55%,#19c3ff) !important;color:#fff !important;border:1px solid #1a6dff !important;border-radius:12px !important;
+  box-shadow:0 8px 22px rgba(26,109,255,.45) !important}
+.btn-danger,.btn-red,.logout-btn,.btn-delete{background:linear-gradient(115deg,#d9143a,#ff2a4d) !important;color:#fff !important;border:1px solid #ff2a4d !important}
+.btn-nav-login,.btn-secondary,.btn-outline,.btn-ghost{background:transparent !important;color:#9fd2ff !important;border:1px solid rgba(90,150,255,.5) !important}
+.nav-balance-btn,.ph-chip{background:#13235a !important;color:#9fd2ff !important;border-color:rgba(90,150,255,.4) !important}
+button{color:inherit}
+.dsh-balance-card,.dsh-promo,.wal-hero{color:#fff !important;background:linear-gradient(135deg,#0f4fd6 0%,#1a6dff 55%,#d9143a 140%) !important;border:1px solid rgba(255,255,255,.15) !important}
+.dsh-balance-card *,.dsh-promo *,.wal-hero *{color:#fff !important}
+.dsh-balance-card .dsh-add-btn,.dsh-balance-card button{color:#0f4fd6 !important;background:#fff !important}
+
+/* nav bars, tabs, chips */
+.bottom-tabbar,.dsh-bottom-nav{background:rgba(5,11,34,.96) !important;border:1px solid rgba(90,150,255,.3) !important;box-shadow:0 10px 30px rgba(0,0,0,.6) !important}
+.mkt-chip,.dsh-nav-item,.bt-item,.hm-tab,.txn-seg-opt{background:#0f1b44 !important;color:#a3b5dc !important;border:1px solid rgba(90,150,255,.25) !important}
+.mkt-chip.active,.dsh-nav-item.active,.dsh-nav-item.on,.bt-item.active,.bt-item.on,.hm-tab.active,.hm-tab.on,.hm-tab[aria-selected="true"],.txn-seg-opt.active,.txn-seg-opt.on,.lock-role-tab.active,a[aria-current="page"]{
+  background:linear-gradient(115deg,#0f4fd6,#1a6dff) !important;border-color:#19c3ff !important;color:#fff !important}
+.badge{background:rgba(255,42,77,.18) !important;color:#ff8da1 !important;border:1px solid rgba(255,42,77,.4) !important}
+.notif-badge,.badge-count,.unread-count,.cart-count{background:#ff2a4d !important;color:#fff !important}
+.online-pill,.dsh-stat-dot,.pdot{color:#19c3ff !important}
+.msg.err,p.msg.err,.err{color:#ff6b84 !important}
+.tb-link,.tb-back,.tb-title,summary.how-sum,a.back,.back,.wrap>a:first-child{color:#9fd2ff !important;background:transparent !important}
+
+/* menu drawer, selector sheet, modals */
+.rsh-drawer{background:#08112e !important;color:#eef3ff !important;border-color:rgba(90,150,255,.25) !important}
+.rsh-drawer-link,.rsh-menu-toggle{color:#eef3ff !important}
+.rsh-drawer-link:hover,.rsh-menu-toggle:hover,.rsh-sub-link:hover{background:#13235a !important}
+.ks-sheet-trigger{background:#0f1b44 !important;color:#eef3ff !important;border:1px solid rgba(90,150,255,.35) !important}
+.ks-sheet-subtitle{color:#a3b5dc !important}
+.ks-sheet{background:#0a1433 !important;color:#eef3ff !important;border-color:rgba(90,150,255,.3) !important}
+.ks-sheet *{border-color:rgba(90,150,255,.2) !important}
+.ks-sheet-grab{background:#2a3f80 !important}
+.ks-sheet input{background:#0f1b44 !important}
+.ks-sheet button,.ks-sheet [class*="option"],.ks-sheet [class*="item"]{color:#eef3ff !important;background:#0f1b44 !important}
+.ks-sheet [class*="option"]:hover,.ks-sheet [class*="item"]:hover,.ks-sheet [aria-selected="true"]{background:#1a3a8f !important}
+.ks-sheet-overlay,.rsh-gate,.rsh-menu-backdrop{background:rgba(2,5,18,.7) !important}
+#kb-loader{background:#050b22 !important}
+#kb-loader .kb-logo{box-shadow:0 6px 28px rgba(26,109,255,.6) !important}
+#kb-loader .kb-logo::after{border-color:rgba(26,109,255,.2) !important;border-top-color:#ff2a4d !important}
+::selection{background:#1a6dff;color:#fff}
+
+/* any leftover inline white boxes -> dark (stops white-on-white) */
+[style*="background:#fff"],[style*="background: #fff"],[style*="background:#ffffff"],[style*="background: #ffffff"],
+[style*="background:white"],[style*="background: white"],[style*="background-color:#fff"],[style*="background-color: #fff"],[style*="background:#f4f8ff"],[style*="background:#eaf3ff"]{
+  background:#0f1b44 !important;color:#eef3ff !important}
+[style*="color:#fff"] *,[style*="color: #fff"] *{color:inherit}
+[style*="color:#060d2b"],[style*="color:#000"],[style*="color: #000"],[style*="color:#111"],[style*="color:#222"],[style*="color:#333"]{color:#eef3ff !important}
+code,pre,.api-key-box{background:#0a1433 !important;color:#9fd2ff !important}
+hr{border-color:rgba(90,150,255,.2) !important}
+
+/* header bars on home/index, password "Show" toggle, Google button */
+.nav,.navbar,nav#navbar,#navbar{background:rgba(5,11,34,.94) !important;border-bottom:1px solid rgba(90,150,255,.25) !important;box-shadow:0 2px 18px rgba(26,109,255,.25) !important;color:#eef3ff !important}
+.nav a,.navbar a,.nav .brand,.navbar .brand,.nav-brand,.nav-brand *{color:#eef3ff !important}
+.nav .btn-nav-login,.navbar .btn-nav-login,.nav .btn-nav-reg,.navbar .btn-nav-reg{color:#fff !important}
+.toggle{background:#13235a !important;color:#9fd2ff !important;border:1px solid rgba(90,150,255,.4) !important}
+
+/* red accents from the logo's chat bubble */
+.btn-nav-reg,.hero-cta.alt,.btn-red{background:linear-gradient(115deg,#d9143a,#ff2a4d) !important;border-color:#ff2a4d !important;box-shadow:0 8px 22px rgba(255,42,77,.4) !important;color:#fff !important}
+.step-num,.num-badge,.sec-eyebrow{color:#ff5d78 !important}
+.card:hover,.prod-card:hover,.dsh-svc-item:hover{border-color:rgba(255,42,77,.55) !important}
+
+/* ═══ PASS 2: white -> red, readable text everywhere ═══ */
+:root{--rsh-red-grad:linear-gradient(135deg,#b80f2e,#ff2a4d);--rsh-blue-grad:linear-gradient(115deg,#0b3fb8,#1a6dff)}
+
+/* all primary/blue buttons: solid dark-to-mid blue so white text always passes */
+.btn-primary,.btn-gold,.btn-nav-reg,.hero-cta,.buy-btn,.prod-select-btn,button.primary,.btn-blue,button.submit,#submit,.fpbtn,.btn.fill,a.btn.fill,
+span.btn,a.btn-primary,button#buy,#numBuyBtn,.dsh-promo-btn,.kw-plus,#nhCopyNumberBtn,.btn-full,.btn-edit,.auth-home-btn{
+  background:var(--rsh-blue-grad) !important;color:#fff !important;border:1px solid #3d86ff !important}
+.btn-primary *,.btn-gold *,.hero-cta *,.btn.fill *,span.btn *,#buy *,#numBuyBtn *{color:#fff !important}
+.btn-nav-reg,.btn-red,.btn-danger,.danger,button.danger,#cancelBtn,#numCancelBtn,.btn-sm.danger{background:var(--rsh-red-grad) !important;color:#fff !important;border:1px solid #ff5d78 !important}
+.btn-sm{background:#1a2f72 !important;color:#fff !important}
+
+/* wallet / hero blue cards: keep every label white and readable */
+.dsh-balance-card,.dsh-promo,.wal-hero,.kw-card,[class^="kw-"]{background-image:linear-gradient(135deg,#0b3fb8,#1a6dff 60%,#7a1030 140%)}
+.kw-brand,.kw-label,.kw-cur,.kw-sub,.kw-amt,.kw-eye,.kw-plus,#navInitial,#dshAvatarInitial,.avatar,[id$="Initial"]{color:#fff !important}
+.kw-eye{background:rgba(255,255,255,.18) !important}
+
+/* leftover white surfaces -> brand red with white text */
+.select-tile,.srv-topbar,#numTopBar,.dsh-svc-icon,.dsh-support-fab,.dsh-toast,.wc-refresh,.bal-refresh,.dep-subnav,.gbtn,#gBtn,button.txn-seg-opt,.dsh-promo-btn,.kw-plus{
+  background:var(--rsh-red-grad) !important;color:#fff !important;border:1px solid #ff5d78 !important}
+.select-tile *,.srv-topbar *,.dsh-svc-icon *,.dsh-support-fab *,.dsh-toast *,.wc-refresh *,.bal-refresh *,.dep-subnav *,.gbtn *,.txn-seg-opt *,.tb-title,#numTopBarTitle,#numBalDisplay{color:#fff !important}
+.dsh-svc-icon svg,.dsh-svc-icon svg *{stroke:#fff !important;color:#fff !important}
+.dsh-svc-icon svg [fill]:not([fill="none"]){fill:#fff !important}
+.gbtn svg *{fill:revert !important;stroke:revert !important}
+button.txn-seg-opt.active{background:var(--rsh-blue-grad) !important;border-color:#3d86ff !important}
+.promo-btn,.dsh-promo-btn{box-shadow:0 6px 18px rgba(26,109,255,.45) !important}
+/* loaders / overlays stay navy, never red or white */
+#pgLoad,#pgLoad.on,.dbfl-overlay,#dbfl-overlay{background:rgba(5,11,34,.96) !important;color:#eef3ff !important}
+#dbfl-text,.dbfl-text{color:#cfe0ff !important}
+
+/* Number-page white cards -> dark cards */
+.how-card,#numHowToCard,#numServerCard,#numServerIntro,details.card,.card.select-card,.step-card,.srv-card,.an-card,.active-numbers{
+  background:linear-gradient(145deg,#0f1b44,#0b1637) !important;color:#eef3ff !important;border:1px solid rgba(90,150,255,.25) !important}
+.how-card *,#numServerCard *,#numServerIntro *{color:#dbe6ff !important}
+.how-card b,.how-card h3,.how-card h4,#numServerCard h3,#numServerCard h4,.st-value{color:#fff !important}
+.step-n,.step-label,.st-icon,.n{background:var(--rsh-blue-grad) !important;color:#fff !important}
+.stock-chip,.online-pill,.an-count-chip,.chip,button.chip{background:#13235a !important;color:#cfe0ff !important;border:1px solid rgba(90,150,255,.4) !important}
+summary.how-sum,.how-sum{color:#cfe0ff !important}
+
+/* muted greys that were too dark on navy */
+.label,.lbl,.msg,.foot,.mgid-hint,.info-note,.info-box,.notice,#notice,.hint,.st-label,.st-chev,.srv-note,.srv-sub,
+p.foot,.sub-label,.dep-sub,.bal-label,.wc-label,.dmc-sub,.va-field-label,.live-support-status,.auth-sub,.tagline{color:#b8c8ee !important}
+.info-box,.info-note,.notice,#notice{background:rgba(26,109,255,.16) !important;border:1px solid rgba(90,150,255,.35) !important;color:#e1ebff !important}
+.copy,#copyNumber,button.btn-outline,#numCopyBtn,.va-copy-btn,.how-toggle-btn,.dep-back-link,.hub-back,.bal-refresh,.auth-brand,.google-btn-link,a.google-btn-link{
+  color:#cfe6ff !important;background:#13235a !important;border:1px solid rgba(90,150,255,.45) !important}
+.auth-brand,.auth-brand span,.hero-gradient,span.hero-gradient{color:#8fd0ff !important;-webkit-text-fill-color:#8fd0ff !important;background:none !important}
+.va-status-pill,.va-badge,.dmc-badge{background:rgba(25,195,255,.18) !important;color:#bfe8ff !important;border:1px solid rgba(25,195,255,.4) !important}
+.va-badge-gray{background:#1b2a5e !important;color:#cfe0ff !important}.dmc-title,.dep-chip,.wc-brand,.wc-chip,.wc-id,.wc-lifetime,.dmc-arrow,.va-field-val,.va-fee-amt,#depositBal,.dep-amt-label,.dep-naira-sym,.ph-chip,.bal-amount,.step-n{color:#fff !important}
+a.google-btn-link,.auth a{color:#8fd0ff !important}
+.dsh-bottom-nav a,.dsh-bottom-nav span{color:#cfe0ff !important}
+label,h3,h4{color:#eef3ff !important}
+
+/* ═══ PASS 3: stubborn page-specific boxes ═══ */
+html,html[data-theme]{--muted:#b8c8ee !important;--line:rgba(90,150,255,.25) !important;--nb-blue-soft:rgba(26,109,255,.25) !important}
+div[id].card,.card[id],div.auth-card,.how-card,.bal-card,.wrap .card{
+  background:linear-gradient(145deg,#0f1b44,#0b1637) !important;color:#eef3ff !important;border:1px solid rgba(90,150,255,.25) !important}.auth-card *,div[id].card *{color:inherit}.auth-card h2,.auth-card h3,div[id].card h3,div[id].card b,div[id].card li{color:#fff !important}.auth-sub,div[id].card p,div[id].card .srv-note,div[id].card span{color:#c6d4f5 !important}
+.auth-brand{color:#8fd0ff !important}
+.auth-card a,#loginBtn+*,.auth-card .forgot a{color:#8fd0ff !important}
+span#navInitial,span#dshAvatarInitial,[id$="Initial"]{background:var(--rsh-blue-grad) !important;color:#fff !important}
+button#copyCode,button#g2BuyBtn,button#numBuyBtn,button.btn:not(.btn-outline):not(.btn-danger):not(.danger):not(.btn-secondary),#loginBtn{
+  background:var(--rsh-blue-grad) !important;color:#fff !important;border:1px solid #3d86ff !important}
+button.btn.btn-outline,.btn-outline{background:#13235a !important;color:#cfe6ff !important;border:1px solid rgba(90,150,255,.5) !important}
+html body button.txn-seg-opt{background:#13235a !important;color:#cfe0ff !important;border:1px solid rgba(90,150,255,.35) !important}
+html body button.txn-seg-opt.active,html body button.txn-seg-opt.on{background:var(--rsh-blue-grad) !important;color:#fff !important}
+.tb-back,.tb-link,button.tb-back,a.tb-link,.srv-topbar a,.srv-topbar button{color:#fff !important;background:transparent !important}
+.wc-chip{color:#3a2a00 !important}
+.wrap>header p,.wrap header p,main.wrap header .tag,.wrap>header span{color:#c6d4f5 !important}
+.wrap header .brand span,.wrap header h1 span{color:#ff5d78 !important}
+.fplinks a,#fpBack,.or span{color:#9fd2ff !important;background:transparent !important}
+.message.ok{background:#0e3a2a !important;border-color:#2fbf7f !important;color:#bff5dc !important}
+.message.err,.message.error{background:#4a0f1e !important;border-color:#ff5d78 !important;color:#ffd0d8 !important}
+
+/* ═══ PASS 4: beat page-level #id rules ═══ */
+html body #page-login .auth-card,html body #page-register .auth-card,html body #page-login .auth-box,html body #page-register .auth-box,html body .auth-card{
+  background:linear-gradient(145deg,#0f1b44,#0b1637) !important;border:1px solid rgba(90,150,255,.3) !important;box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 30px rgba(26,109,255,.2) !important;color:#eef3ff !important}
+html body .auth-card h1,html body .auth-card h2,html body .auth-card h3,html body .auth-card label{color:#fff !important}
+html body .auth-card p,html body .auth-card small,html body .auth-card span,html body .auth-card .auth-sub{color:#c6d4f5 !important}
+html body .auth-card a,html body .auth-card .auth-brand{color:#8fd0ff !important}
+html body .auth-card .btn-primary,html body .auth-card #loginBtn{color:#fff !important}
+html body .srv-topbar .tb-back,html body .srv-topbar .tb-link,html body .srv-topbar a,html body .srv-topbar button{color:#fff !important}
+html body .st-label,html body .st-chev,html body .select-tile .st-label{color:#fff !important}
+html body .btn.btn-outline,html body a.btn.btn-outline,html body button.btn.btn-outline{background:#13235a !important;color:#cfe6ff !important;border:1px solid rgba(90,150,255,.5) !important}
+html body button#hideActive,html body #hideActive{background:#13235a !important;color:#fff !important;border:1px solid rgba(90,150,255,.5) !important}
+html body .txn-seg .txn-seg-opt,html body .txn-seg-opt,html body button.txn-seg-opt:not(.active){background:#13235a !important;color:#cfe0ff !important;-webkit-text-fill-color:#cfe0ff !important}
+html body .txn-seg-opt.active,html body .txn-seg .txn-seg-opt.active{background:var(--rsh-blue-grad) !important;color:#fff !important;-webkit-text-fill-color:#fff !important}
+html body .gbtn span,html body #gBtn span{color:#fff !important}
+
+/* ═══ PASS 5: last white leftovers from rado-brand.css ═══ */
+html body::after{background:#050b22 !important}
+html body #page-login,html body #page-register{background:transparent !important;color:#eef3ff !important}
+html body #page-login h1,html body #page-login h2,html body #page-login h3,html body #page-login label,html body #page-register h1,html body #page-register h2,html body #page-register h3,html body #page-register label{color:#fff !important}
+html body #page-login input,html body #page-register input,html body #page-login select,html body #page-register select{background:#0a1433 !important;color:#eef3ff !important;border:1px solid rgba(90,150,255,.4) !important}
+html body #page-login button[type="submit"],html body #page-register button[type="submit"],html body #page-login .btn-primary,html body #page-register .btn-primary,html body #page-login .auth-btn,html body #page-register .auth-btn{background:var(--rsh-blue-grad) !important;color:#fff !important}
+html body #txnSegmented button,html body #txnSegmented a{background:#13235a !important;color:#cfe0ff !important;border:1px solid rgba(90,150,255,.4) !important}
+html body #txnSegmented button.active,html body #txnSegmented a.active{background:var(--rsh-blue-grad) !important;color:#fff !important}
+html body .hm-tab{background:#13235a !important;color:#cfe0ff !important;border:1px solid rgba(90,150,255,.4) !important}
+html body .hm-tab.active,html body .hm-tab.on{background:var(--rsh-blue-grad) !important;color:#fff !important}
+html body .rsh-sheet{background:#0a1433 !important;border-color:rgba(90,150,255,.35) !important;color:#eef3ff !important}
+html body .rsh-sheet a{background:#13235a !important;color:#eef3ff !important;border:1px solid rgba(90,150,255,.3) !important}
+html body .rsh-sheet-head button{background:var(--rsh-red-grad) !important;color:#fff !important;border:1px solid #ff5d78 !important}
+html body .rsh-mk-img,html body .rsh-mk-ph{background:#13235a !important}
+html body .rsh-mk-item{background:#0f1b44 !important;color:#eef3ff !important;border-color:rgba(90,150,255,.3) !important}
+html body #kb-loader{background:#050b22 !important}
+html body .wrap .btn.btn-outline,html body .btn.btn-outline{background:#13235a !important;color:#cfe6ff !important;border:1px solid rgba(90,150,255,.5) !important}
+
+/* dropdowns: always dark with white text (no cyan-on-white) */
+html body select{background-color:#13235a !important;background-image:none !important;color:#fff !important;border:1px solid rgba(90,150,255,.45) !important}
+html body select option{background:#0a1433 !important;color:#fff !important}

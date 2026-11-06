@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create Account — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"></head><body><div class="authwrap"><a class="logo" href="/"><img src="/rado/rado-logo.png" alt="Rado Social Hub"></a>
+<div class="card"><h2>Create Account</h2><div id="m" class="msg"></div>
+<form id="f"><label>Your Name</label><input id="name" autocomplete="name" required>
+<label>Your Email</label><input id="email" type="email" autocomplete="email" required>
+<label>Your Country</label><select id="country"><option value="">Select Country</option></select>
+<label>Your WhatsApp Number</label><input id="phone" type="tel" autocomplete="tel" placeholder="e.g. 08012345678" required>
+<label>Your Password</label><input id="pw" type="password" autocomplete="new-password" required>
+<label>Confirm Your Password</label><input id="pw2" type="password" autocomplete="new-password" required>
+<br><button class="btn block" id="go">Register</button></form>
+<div class="foot">Already registered? <a href="/login">Login</a></div></div></div>
+<script src="/rado/rado.js"></script><script>
+if(token())location.replace('/dashboard');
+(async()=>{try{const l=await fetch('/api/countries').then(r=>r.json());const list=Array.isArray(l)?l:(l.countries||[]);
+ $('#country').innerHTML='<option value="">Select Country</option>'+list.map(c=>`<option value="${esc(c.code||c.iso)}">${esc(c.name)}</option>`).join('')}catch(e){}
+ if(($('#country').options.length)<2)$('#country').innerHTML='<option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option><option value="US">United States</option><option value="GB">United Kingdom</option>'})();
+$('#f').onsubmit=async e=>{e.preventDefault();const m=$('#m');m.className='msg';
+if($('#pw').value!==$('#pw2').value){m.textContent='Passwords do not match.';m.className='msg err';return}
+if(!$('#country').value){m.textContent='Please select your country.';m.className='msg err';return}
+$('#go').disabled=true;
+try{const ref=new URLSearchParams(location.search).get('ref')||'';const d=await api('/api/auth/register','POST',{name:$('#name').value,email:$('#email').value,country:$('#country').value,phoneCountry:$('#country').value,phone:$('#phone').value,password:$('#pw').value,refCode:ref});saveSession(d);location.replace('/dashboard')}
+catch(er){m.textContent=er.message;m.className='msg err'}finally{$('#go').disabled=false}};
+</script></body></html>

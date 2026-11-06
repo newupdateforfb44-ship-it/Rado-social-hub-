@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMS Numbers — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"></head><body><main id="app"><h1>Buy SMS Number</h1>
+<div class="card warnbox"><h2>Important Notice <span style="color:#e0a64b;font-size:18px">▾</span></h2><ol>
+<li>For WhatsApp verification, please delete any modified or unofficial WhatsApp versions and install the official WhatsApp app only.</li>
+<li>After setup, enable Two-Factor Authentication (2FA) on your WhatsApp account for better security.</li>
+<li>Save contacts before sending messages to ensure proper delivery and easier communication.</li>
+<li>If using Telegram, delete old versions and install the latest official app before use.</li>
+<li>Turn on your VPN and select the same country location as the number or service you purchased before using Telegram.</li>
+<li>Always keep your apps updated to avoid verification or login issues.</li>
+<li>Failure to follow these steps may cause verification delays or account restrictions.</li></ol>
+<p style="font-size:20px">Please keep in mind that these are all <b>temporary phone numbers</b>.</p><hr style="border:0;border-top:1px solid #ccc;margin:22px 0">
+<h2>Purchase Number</h2><div id="bm" class="msg"></div>
+<label>1. Search Service</label><input id="sq" placeholder="Search service (e.g. WhatsApp)" style="margin-bottom:10px"><select id="service"><option value=""></option></select>
+<label>2. Select Country</label><select id="country"><option value=""></option></select>
+<p id="pr" class="muted" style="font-size:20px;margin:14px 0 0"></p>
+<br><button class="btn block" id="buy" disabled>🛒&nbsp; Buy Number</button></div>
+<div id="active"></div>
+<div class="card"><h2>Orders</h2><div id="ords"></div></div></main><script src="/rado/rado.js"></script><script>(async()=>{const user=await initShell('SMS Numbers',{title:'SMS Numbers'});if(!user)return;let svcs=[],price=0;
+function drawSvc(){const q=$('#sq').value.trim().toLowerCase();const v=svcs.filter(s=>!q||s.name.toLowerCase().includes(q));
+ $('#service').innerHTML=v.length?v.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join(''):'<option value="">No service found</option>';getPrice()}
+try{svcs=await api('/api/rado/numbers/services');drawSvc()}catch(e){$('#service').innerHTML='<option value="">Numbers unavailable right now</option>'}
+try{const cs=await api('/api/rado/numbers/countries');$('#country').innerHTML='<option value="">Select country</option>'+cs.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}catch(e){$('#country').innerHTML='<option value="">Numbers unavailable right now</option>'}
+let seq=0;async function getPrice(){const s=$('#service').value,c=$('#country').value;price=0;$('#buy').disabled=true;$('#pr').textContent='';if(!s||!c)return;
+ const my=++seq;$('#pr').textContent='Checking price…';
+ try{const d=await api('/api/rado/numbers/price?service='+encodeURIComponent(s)+'&country='+encodeURIComponent(c));if(my!==seq)return;price=d.price;$('#pr').innerHTML='Price: <b>'+naira(price)+'</b>';$('#buy').disabled=false}
+ catch(e){if(my!==seq)return;$('#pr').textContent=e.message}}
+$('#sq').oninput=drawSvc;$('#service').onchange=getPrice;$('#country').onchange=getPrice;
+$('#buy').onclick=async()=>{const m=$('#bm');m.className='msg';
+ if(!price||!confirm('Buy this number for '+naira(price)+'?'))return;$('#buy').disabled=true;
+ try{const d=await api('/api/rado/numbers/buy','POST',{service:$('#service').value,country:$('#country').value,expectedPrice:price});
+  if(d.pending){m.textContent=d.message;m.className='msg err';return}
+  m.textContent='Number purchased: '+d.phoneNumber;m.className='msg ok';poll(d.orderId);loadOrders2()}
+ catch(e){m.textContent=e.message;m.className='msg err'}finally{$('#buy').disabled=false}};
+let timer;function poll(id){clearInterval(timer);const tick=async()=>{try{const s=await api('/api/rado/numbers/status/'+id);
+ $('#active').innerHTML=`<div class="card"><h2>Your number</h2><div class="copy"><input readonly value="${esc(s.phoneNumber)}"><button class="btn" onclick="navigator.clipboard.writeText('${esc(s.phoneNumber)}')">Copy</button></div><p style="font-size:20px">${esc(s.service||'')} · ${esc(s.country||'')}</p><p style="font-size:22px"><b>${s.code?'Code: '+esc(s.code):'Waiting for SMS…'}</b></p>${s.code?'':'<button class="btn white" style="border:1px solid #9ca3af" id="cx">Cancel &amp; refund</button>'}</div>`;
+ const cx=$('#cx');if(cx)cx.onclick=async()=>{try{await api('/api/rado/numbers/cancel/'+id,'POST');clearInterval(timer);tick();loadOrders2()}catch(e){alert(e.message)}};
+ if(s.code||['cancelled','expired'].includes(s.status)){clearInterval(timer);loadOrders2()}}catch(e){}};tick();timer=setInterval(tick,5000)}
+async function loadOrders2(){try{const o=await api('/api/rado/numbers/my-orders');$('#ords').innerHTML=o.length?`<div class="scroll"><table><thead><tr><th>Number</th><th>Country</th><th>Status</th><th>Code</th></tr></thead><tbody>${o.slice(0,20).map(x=>`<tr><td>${esc(x.phoneNumber)}</td><td>${esc(x.country)}</td><td><span class="pill ${esc(x.status)}">${esc(x.status)}</span></td><td>${esc(x.code||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No orders yet</div>'}catch(e){$('#ords').innerHTML='<div class="empty">No orders yet</div>'}}
+loadOrders2();})();</script></body></html>
