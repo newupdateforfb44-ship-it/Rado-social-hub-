@@ -23,8 +23,16 @@ function drawSvc(){const q=$('#sq').value.trim().toLowerCase(),keep=$('#service'
  $('#service').disabled=!$('#country').value;
  $('#service').innerHTML=!$('#country').value?'<option value="">Select a country first</option>':(v.length?optList(v,'Select service'):'<option value="">No service found</option>');
  if(keep&&v.some(s=>s.id===keep))$('#service').value=keep}
-try{ctys=await api('/api/rado/numbers/countries');$('#country').innerHTML=optList(ctys,'Select country')}catch(e){$('#country').innerHTML='<option value="">Numbers unavailable right now</option>'}
-try{svcs=await api('/api/rado/numbers/services')}catch(e){}
+// Fast start: show the last saved lists instantly, then refresh both lists at the same time.
+const LS=(k)=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const c0=LS('rsh_ctys'),s0=LS('rsh_svcs');
+if(c0&&c0.length){ctys=c0;$('#country').innerHTML=optList(ctys,'Select country')}
+if(s0&&s0.length){svcs=s0;drawSvc()}
+await Promise.all([
+ api('/api/rado/numbers/countries').then(v=>{ctys=v;SV('rsh_ctys',v);const keep=$('#country').value;drawCty();if(keep&&ctys.some(c=>c.id===keep))$('#country').value=keep}).catch(()=>{if(!ctys.length)$('#country').innerHTML='<option value="">Numbers unavailable right now</option>'}),
+ api('/api/rado/numbers/services').then(v=>{svcs=v;SV('rsh_svcs',v);drawSvc()}).catch(()=>{})
+]);
 function resetPool(msg){pool=null;$('#buy').disabled=true;$('#sum').style.display='none';$('#pools').className='muted';$('#pools').innerHTML=msg}
 function pickPool(p){pool=p;
  document.querySelectorAll('#pools .pool').forEach(el=>{const on=el.dataset.id===p.id;el.style.borderColor=on?'#16a34a':'#9ca3af';el.style.background=on?'#ecfdf3':'transparent';el.style.color=on?'#14532d':'inherit'});
@@ -39,7 +47,7 @@ async function loadPools(){const s=$('#service').value,c=$('#country').value;
  try{const list=await api('/api/rado/numbers/pools?service='+encodeURIComponent(s)+'&country='+encodeURIComponent(c));if(my!==seq)return;
   if(!list.length){resetPool('No number is available for this service in this country right now. Try another country or service.');return}
   $('#pools').className='';
-  $('#pools').innerHTML=list.map(p=>`<button type="button" class="btn white pool" data-id="${esc(p.id)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;margin:0 0 8px;border:2px solid #9ca3af;text-align:left"><span>${esc(p.name)}${p.stock!=null?' <small style="opacity:.7">· '+esc(String(p.stock))+' available</small>':''}</span><b>${naira(p.price)}</b></button>`).join('');
+  $('#pools').innerHTML=list.map(p=>`<button type="button" class="btn white pool" data-id="${esc(p.id)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;margin:0 0 8px;border:2px solid #9ca3af;text-align:left"><span>${esc(p.name)}${p.rate?' <small style="opacity:.7">· '+esc(p.rate)+'</small>':''}${p.stock!=null?' <small style="opacity:.7">· '+esc(String(p.stock))+' available</small>':''}</span><b>${naira(p.price)}</b></button>`).join('');
   document.querySelectorAll('#pools .pool').forEach((el,i)=>el.onclick=()=>pickPool(list[i]));
   if(list.length===1)pickPool(list[0])}
  catch(e){if(my!==seq)return;resetPool(esc(e.message))}}
