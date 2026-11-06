@@ -399,6 +399,7 @@ tr:hover td{background:rgba(255,255,255,.035)}
       <div class="sec">
         <div class="sec-title"><svg class="icon i-banknote" aria-hidden="true"><use href="#i-banknote"/></svg> Markup</div>
         <div class="info-box">The markup is the percentage added on top of what the provider charges you. Leave a box empty to use the server default. Changes apply to customers within seconds.</div>
+        <div class="info-box" id="rpMkNow" style="font-weight:600"></div>
         <div class="form-row">
           <div class="fg"><label>SMS numbers markup (%)</label><input type="number" id="rpMkNum" min="0" max="1000" step="0.1" placeholder="e.g. 20"/></div>
           <div class="fg"><label>Products markup (%)</label><input type="number" id="rpMkProd" min="0" max="1000" step="0.1" placeholder="e.g. 20"/></div>
@@ -431,6 +432,18 @@ tr:hover td{background:rgba(255,255,255,.035)}
           <div class="fg"><select id="rpProdCat" onchange="rpRenderProducts()"></select></div>
         </div>
         <div id="rpProdList"></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title"><svg class="icon i-package" aria-hidden="true"><use href="#i-package"/></svg> Product logos (by name)</div>
+        <div class="info-box">Type a name like <b>Facebook</b>, pick a logo picture and save. That logo then shows on <b>every product</b> whose name or category contains that word. Do the same for Instagram, TikTok, Twitter, Gmail and so on.</div>
+        <div class="form-row">
+          <div class="fg"><label>Name</label><input type="text" id="rpLgKey" placeholder="e.g. Facebook"/></div>
+          <div class="fg"><label>Logo picture</label><input type="file" id="rpLgFile" accept="image/*"/></div>
+        </div>
+        <button class="btn-gold" type="button" style="width:auto" onclick="rpSaveLogo()">Save logo</button>
+        <span id="rpLgMsg" style="margin-left:10px;font-size:13px"></span>
+        <div id="rpLgList" style="margin-top:14px"></div>
       </div>
 
       <div class="sec">
@@ -2470,11 +2483,14 @@ async function rpLoad(){
     document.getElementById('rpMkProd').value = rpData.markups.productsIsCustom ? rpData.markups.products : '';
     document.getElementById('rpMkNum').placeholder = 'Default: ' + rpData.markups.numbers + '%';
     document.getElementById('rpMkProd').placeholder = 'Default: ' + rpData.markups.products + '%';
+    (function(){ var m = rpData.multiplier || 1, pm = rpData.markups.products, nm = rpData.markups.numbers;
+      document.getElementById('rpMkNow').innerHTML = 'Right now: products markup <b>' + pm + '%</b> · numbers markup <b>' + nm + '%</b> · provider price multiplier <b>×' + m + '</b>.<br>Customer price = provider price × ' + m + ' × (1 + markup%). Example: a ₦2,000 product sells for ₦' + Math.ceil(2000 * m * (1 + pm / 100)).toLocaleString() + '.'; })();
     const sel = document.getElementById('rpPvService');
     sel.innerHTML = rpData.numbers.map(n => '<option value="' + rpEsc(n.id) + '">' + rpEsc(n.name) + '</option>').join('');
     const cats = [...new Set(rpData.products.map(p => p.category))].sort();
     document.getElementById('rpProdCat').innerHTML = '<option value="">All categories</option>' + cats.map(c => '<option>' + rpEsc(c) + '</option>').join('');
     rpRenderNumbers(); rpRenderProducts();
+    rpLoadLogos();
     if (rpData.errors && rpData.errors.numbers) document.getElementById('rpNumList').innerHTML = '<p style="color:var(--red)">Could not load services: ' + rpEsc(rpData.errors.numbers) + '</p>';
     if (rpData.errors && rpData.errors.products) document.getElementById('rpProdList').innerHTML = '<p style="color:var(--red)">Could not load products: ' + rpEsc(rpData.errors.products) + '</p>';
   } catch (e) {
@@ -2482,6 +2498,35 @@ async function rpLoad(){
     document.getElementById('rpNumList').innerHTML = m; document.getElementById('rpProdList').innerHTML = m;
   }
   rpLoadCountries(); rpLoadOrders();
+}
+
+function rpImgToData(file){return new Promise(function(ok,bad){var fr=new FileReader();fr.onerror=function(){bad(new Error('Could not read the picture'))};fr.onload=function(){var im=new Image();im.onerror=function(){bad(new Error('That file is not a picture'))};im.onload=function(){var S=192,c=document.createElement('canvas');c.width=c.height=S;var x=c.getContext('2d');var r=Math.min(S/im.width,S/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,(S-w)/2,(S-h)/2,w,h);ok(c.toDataURL('image/png'))};im.src=fr.result};fr.readAsDataURL(file)})}
+async function rpLoadLogos(){
+  const box = document.getElementById('rpLgList'); if (!box) return;
+  try {
+    const rows = await aFetch('/api/rado/admin/logos');
+    box.innerHTML = rows.length ? '<div style="overflow-x:auto"><table><thead><tr><th>Logo</th><th>Name</th><th>Products</th><th></th></tr></thead><tbody>' +
+      rows.map(r => '<tr><td><img src="' + rpEsc(r.url) + '" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:#e5e7eb"/></td><td><b>' + rpEsc(r.keyword) + '</b></td><td>' + r.matched + '</td>' +
+        '<td style="white-space:nowrap"><button class="btn-sm" type="button" onclick="rpEditLogo(\'' + rpEsc(r.keyword).replace(/'/g, '') + '\')">Change</button> <button class="btn-sm" type="button" style="background:var(--red)" onclick="rpDeleteLogo(\'' + rpEsc(r.id) + '\')">Delete</button></td></tr>').join('') + '</tbody></table></div>'
+      : '<p style="color:var(--t2)">No logos added yet.</p>';
+  } catch (e) { box.innerHTML = '<p style="color:var(--red)">' + rpEsc(e.message) + '</p>'; }
+}
+function rpEditLogo(name){ document.getElementById('rpLgKey').value = name; rpMsg('rpLgMsg', 'Now pick the new picture and press Save logo.', true); document.getElementById('rpLgFile').click(); }
+async function rpSaveLogo(){
+  try {
+    const key = document.getElementById('rpLgKey').value.trim();
+    const f = document.getElementById('rpLgFile').files[0];
+    if (!key) throw new Error('Type the name first, for example Facebook.');
+    if (!f) throw new Error('Choose a logo picture first.');
+    const image = await rpImgToData(f);
+    await aFetch('/api/rado/admin/logos', 'PUT', { keyword: key, image: image });
+    document.getElementById('rpLgKey').value = ''; document.getElementById('rpLgFile').value = '';
+    rpMsg('rpLgMsg', 'Saved. It now shows on every product with this name.', true); rpLoadLogos();
+  } catch (e) { rpMsg('rpLgMsg', e.message, false); }
+}
+async function rpDeleteLogo(id){
+  if (!confirm('Remove this logo?')) return;
+  try { await aFetch('/api/rado/admin/logos/' + id, 'DELETE'); rpLoadLogos(); } catch (e) { rpMsg('rpLgMsg', e.message, false); }
 }
 async function rpLoadCountries(){
   const sel = document.getElementById('rpPvCountry'); if (!sel || sel.options.length) return;
