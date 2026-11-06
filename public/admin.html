@@ -2483,8 +2483,8 @@ async function rpLoad(){
     document.getElementById('rpMkProd').value = rpData.markups.productsIsCustom ? rpData.markups.products : '';
     document.getElementById('rpMkNum').placeholder = 'Default: ' + rpData.markups.numbers + '%';
     document.getElementById('rpMkProd').placeholder = 'Default: ' + rpData.markups.products + '%';
-    (function(){ var m = rpData.multiplier || 1, pm = rpData.markups.products, nm = rpData.markups.numbers;
-      document.getElementById('rpMkNow').innerHTML = 'Right now: products markup <b>' + pm + '%</b> · numbers markup <b>' + nm + '%</b> · provider price multiplier <b>×' + m + '</b>.<br>Customer price = provider price × ' + m + ' × (1 + markup%). Example: a ₦2,000 product sells for ₦' + Math.ceil(2000 * m * (1 + pm / 100)).toLocaleString() + '.'; })();
+    (function(){ var pm = rpData.markups.products, nm = rpData.markups.numbers;
+      document.getElementById('rpMkNow').innerHTML = 'Right now: products markup <b>' + pm + '%</b> · numbers markup <b>' + nm + '%</b>. All prices are in Naira.<br>Customer price = provider price × (1 + markup%). Example: a ₦2,000 product sells for ₦' + Math.ceil(2000 * (1 + pm / 100)).toLocaleString() + '.'; })();
     const sel = document.getElementById('rpPvService');
     sel.innerHTML = rpData.numbers.map(n => '<option value="' + rpEsc(n.id) + '">' + rpEsc(n.name) + '</option>').join('');
     const cats = [...new Set(rpData.products.map(p => p.category))].sort();
