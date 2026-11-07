@@ -1,4 +1,10 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMS Numbers — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"></head><body><main id="app"><h1>Buy SMS Number</h1>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMS Numbers — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"><style>
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid rgba(128,128,128,.35);border-top-color:#1f2937;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:8px}
+.cdbox{display:flex;justify-content:space-between;align-items:center;background:#fef3c7;color:#92400e;border-radius:10px;padding:12px 16px;margin:12px 0;font-size:19px}
+.cdbox b{font-size:30px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.cdbox.low{background:#fee2e2;color:#991b1b}
+</style></head><body><main id="app"><h1>Buy SMS Number</h1>
 <div class="card warnbox"><h2>Important Notice <span style="color:#e0a64b;font-size:18px">▾</span></h2><ol>
 <li>For WhatsApp verification, please delete any modified or unofficial WhatsApp versions and install the official WhatsApp app only.</li>
 <li>After setup, enable Two-Factor Authentication (2FA) on your WhatsApp account for better security.</li>
@@ -54,14 +60,53 @@ async function loadPools(){const s=$('#service').value,c=$('#country').value;
 $('#cq').oninput=drawCty;$('#sq').oninput=()=>{drawSvc();loadPools()};
 $('#country').onchange=()=>{drawSvc();loadPools()};$('#service').onchange=loadPools;
 $('#buy').onclick=async()=>{const m=$('#bm');m.className='msg';
- if(!pool)return;if(!await askConfirm('The amount will be deducted from your wallet balance.',{title:'Confirm purchase',okText:'Pay '+naira(pool.price),rows:[['Number',pool.name||'SMS number'],['Price',naira(pool.price)]]}))return;$('#buy').disabled=true;
+ if(!pool)return;if(!await askConfirm('The amount will be deducted from your wallet balance.',{title:'Confirm purchase',okText:'Pay '+naira(pool.price),rows:[['Number',pool.name||'SMS number'],['Price',naira(pool.price)]]}))return;
+ const b=$('#buy');b.disabled=true;b.innerHTML='<span class="spin"></span>Getting your number…';
  try{const d=await api('/api/rado/numbers/buy','POST',{country:$('#country').value,service:$('#service').value,pool:pool.id,expectedPrice:pool.price});
   if(d.pending){m.textContent=d.message;m.className='msg err';return}
-  m.textContent='Number purchased: '+d.phoneNumber;m.className='msg ok';poll(d.orderId);loadOrders2();loadPools()}
- catch(e){if(!e.shown)notify(e.message,'err');$('#buy').disabled=!pool}};
-let timer;function poll(id){clearInterval(timer);const tick=async()=>{try{const s=await api('/api/rado/numbers/status/'+id);
- $('#active').innerHTML=`<div class="card"><h2>Your number</h2><div class="copy"><input readonly value="${esc(s.phoneNumber)}"><button class="btn" onclick="navigator.clipboard.writeText('${esc(s.phoneNumber)}')">Copy</button></div><p style="font-size:20px">${esc(s.service||'')} · ${esc(s.country||'')}</p><p style="font-size:22px"><b>${s.code?'Code: '+esc(s.code):'Waiting for SMS…'}</b></p>${s.code?'':'<button class="btn white" style="border:1px solid #9ca3af" id="cx">Cancel &amp; refund</button>'}</div>`;
- const cx=$('#cx');if(cx)cx.onclick=async()=>{try{await api('/api/rado/numbers/cancel/'+id,'POST');clearInterval(timer);tick();loadOrders2()}catch(e){alert(e.message)}};
- if(s.code||['cancelled','expired'].includes(s.status)){clearInterval(timer);loadOrders2()}}catch(e){}};tick();timer=setInterval(tick,5000)}
+  setOrder(d);drawActive();m.textContent='Number purchased: '+d.phoneNumber;m.className='msg ok';
+  try{$('#active').scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}
+  loadOrders2();loadPools()}
+ catch(e){if(!e.shown)notify(e.message,'err')}
+ finally{b.innerHTML='🛒&nbsp; Confirm &amp; Buy Number';b.disabled=!pool}};
+
+/* ── Active numbers: shown instantly, with a live countdown ── */
+const cards={};let lastSig='';
+const mmss=ms=>{const t=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};
+function setOrder(o){const left=(o.expiresAt&&o.serverTime)?(new Date(o.expiresAt)-new Date(o.serverTime)):0;
+ const old=cards[o.id]||{};cards[o.id]=Object.assign({},old,o,{endAt:performance.now()+left,busy:old.busy})}
+function drawActive(){const list=Object.values(cards).filter(c=>c.phoneNumber);
+ const sig=JSON.stringify(list.map(c=>[c.id,c.status,c.code,!!c.busy]));if(sig===lastSig)return;lastSig=sig;
+ $('#active').innerHTML=list.map(c=>{const pend=c.status==='pending';
+  let line;
+  if(c.code)line='<p style="font-size:22px"><b>Code: '+esc(c.code)+'</b></p>';
+  else if(pend)line='<p style="font-size:22px"><b>Waiting for SMS…</b></p><div class="cdbox" id="cdb-'+esc(c.id)+'"><span>Time left</span><b data-cd="'+esc(c.id)+'">'+mmss(c.endAt-performance.now())+'</b></div>';
+  else if(c.status==='expired')line='<p style="font-size:20px"><span class="pill expired">Expired</span> No SMS arrived in time. Your money was refunded.</p>';
+  else if(c.status==='cancelled')line='<p style="font-size:20px"><span class="pill cancelled">Cancelled</span> Your money was refunded.</p>';
+  else line='<p style="font-size:20px"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span></p>';
+  const btn=(pend&&!c.code)?'<button class="btn white" style="border:1px solid #9ca3af" data-cx="'+esc(c.id)+'"'+(c.busy?' disabled':'')+'>'+(c.busy?'<span class="spin"></span>Cancelling…':'Cancel &amp; refund')+'</button>':'';
+  return '<div class="card"><h2>Your number</h2><div class="copy"><input readonly value="'+esc(c.phoneNumber)+'"><button class="btn" data-copy="'+esc(c.phoneNumber)+'">Copy</button></div><p style="font-size:20px">'+esc(c.service||'')+' · '+esc(c.country||'')+'</p>'+line+btn+'</div>'}).join('')}
+$('#active').onclick=e=>{const cx=e.target.closest('[data-cx]'),cp=e.target.closest('[data-copy]');
+ if(cx)cancelOrder(cx.dataset.cx);
+ if(cp){try{navigator.clipboard.writeText(cp.dataset.copy);notify('Number copied','ok',{ms:1800})}catch(x){}}};
+async function cancelOrder(id){const c=cards[id];if(!c||c.busy)return;
+ if(!await askConfirm('This number will be cancelled and the amount returned to your wallet.',{title:'Cancel & refund?',okText:'Yes, cancel & refund',cancelText:'Keep number',danger:true,rows:[['Number',c.phoneNumber],['Refund',naira(c.sellPrice)]]}))return;
+ c.busy=true;drawActive();
+ try{await api('/api/rado/numbers/cancel/'+id,'POST');c.busy=false;c.status='cancelled';drawActive();
+  notify('Number cancelled. '+naira(c.sellPrice)+' has been refunded to your wallet.','ok');
+  setTimeout(()=>location.reload(),1200)}
+ catch(e){c.busy=false;notify(e.message,'err');await refreshOne(id)}}
+async function refreshOne(id){try{const o=await api('/api/rado/numbers/status/'+id);const was=(cards[id]||{}).status;setOrder(o);drawActive();if(was!==o.status)loadOrders2()}catch(e){}}
+/* every second: update the countdown; at zero ask the server to expire + refund */
+setInterval(()=>{Object.values(cards).forEach(c=>{if(c.status!=='pending'||c.code)return;
+ const left=c.endAt-performance.now();const el=document.querySelector('[data-cd="'+c.id+'"]');
+ if(el){el.textContent=mmss(left);const box=el.parentElement;if(box)box.classList.toggle('low',left<=120000)}
+ if(left<=0&&!c.expiring){c.expiring=true;refreshOne(c.id).finally(()=>setTimeout(()=>{c.expiring=false},4000))}})},1000);
+/* every 5 seconds: check each waiting number for its SMS */
+setInterval(()=>{Object.values(cards).forEach(c=>{if(c.status==='pending'&&!c.busy&&!c.expiring)refreshOne(c.id)})},5000);
+/* on page load: bring back any number that is still waiting, instantly, then refresh it */
+(async()=>{try{const o=await api('/api/rado/numbers/my-orders');
+ o.filter(x=>x.status==='pending'&&x.phoneNumber).forEach(setOrder);drawActive();
+ Object.keys(cards).forEach(refreshOne)}catch(e){}})();
 async function loadOrders2(){try{const o=await api('/api/rado/numbers/my-orders');$('#ords').innerHTML=o.length?`<div class="scroll"><table><thead><tr><th>Number</th><th>Country</th><th>Status</th><th>Code</th></tr></thead><tbody>${o.slice(0,20).map(x=>`<tr><td>${esc(x.phoneNumber)}</td><td>${esc(x.country)}</td><td><span class="pill ${esc(x.status)}">${esc(x.status)}</span></td><td>${esc(x.code||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No orders yet</div>'}catch(e){$('#ords').innerHTML='<div class="empty">No orders yet</div>'}}
 loadOrders2();})();</script></body></html>
