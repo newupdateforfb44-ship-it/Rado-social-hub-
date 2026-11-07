@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"></head><body><div class="authwrap"><a class="logo" href="/"><img src="/rado/rado-logo.png" alt="Rado Social Hub"></a>
+<div class="card"><h2>Sign in</h2><div id="m" class="msg"></div>
+<form id="f"><label>Your Email</label><input id="email" type="email" autocomplete="email" required>
+<label>Your Password</label><input id="pw" type="password" autocomplete="current-password" required>
+<div class="chk"><label><input type="checkbox" id="rm">Remember me</label><a href="#" id="lost">Lost password?</a></div>
+<button class="btn block" id="go">Sign in</button></form>
+<div class="foot">Not registered? <a href="/register">Create account</a></div></div>
+<div class="card" id="rs1" style="display:none"><h2>Forgot password</h2><div id="m1" class="msg"></div>
+<p class="muted" style="font-size:18px;line-height:1.5">Enter the email on your account and we will send you a 6-digit reset code.</p>
+<form id="f1"><label>Your Email</label><input id="remail" type="email" autocomplete="email" required>
+<button class="btn block" id="go1" style="margin-top:18px">Send reset code</button></form>
+<div class="foot"><a href="#" id="back1">Back to sign in</a></div></div>
+<div class="card" id="rs2" style="display:none"><h2>Reset password</h2><div id="m2" class="msg"></div>
+<p class="muted" style="font-size:18px;line-height:1.5" id="rinfo"></p>
+<form id="f2"><label>6-digit code</label><input id="rcode" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+<label>New password</label><input id="rpw" type="password" autocomplete="new-password" minlength="8" required>
+<label>Confirm new password</label><input id="rpw2" type="password" autocomplete="new-password" minlength="8" required>
+<button class="btn block" id="go2" style="margin-top:18px">Reset password</button></form>
+<div class="foot"><a href="#" id="resend">Resend code</a> &nbsp;·&nbsp; <a href="#" id="back2">Back to sign in</a></div></div></div>
+<script src="/rado/rado.js"></script><script>
+if(token())location.replace('/dashboard');
+let resetEmail='';
+const show=id=>{['signin','rs1','rs2'].forEach(x=>{const e=x==='signin'?document.querySelector('.authwrap .card'):document.getElementById(x);if(e)e.style.display=(x===id)?'':'none'})};
+const setMsg=(el,t,c)=>{el.textContent=t;el.className='msg '+c};
+$('#lost').onclick=e=>{e.preventDefault();$('#remail').value=$('#email').value.trim();show('rs1')};
+$('#back1').onclick=$('#back2').onclick=e=>{e.preventDefault();show('signin')};
+async function sendCode(email,m,btn){
+ btn.disabled=true;
+ try{const d=await api('/api/auth/forgot-password','POST',{email});resetEmail=email;
+  $('#rinfo').textContent=(d.message||'A reset code was sent.')+' '+(d.spamNote||'');
+  show('rs2');setMsg($('#m2'),'Code sent. Check your inbox and spam folder.','ok')}
+ catch(er){setMsg(m,er.message,'err')}finally{btn.disabled=false}}
+$('#f1').onsubmit=e=>{e.preventDefault();sendCode($('#remail').value.trim().toLowerCase(),$('#m1'),$('#go1'))};
+$('#resend').onclick=e=>{e.preventDefault();if(resetEmail)sendCode(resetEmail,$('#m2'),$('#go2'))};
+$('#f2').onsubmit=async e=>{e.preventDefault();const m=$('#m2');
+ if($('#rpw').value!==$('#rpw2').value){setMsg(m,'The two passwords do not match','err');return}
+ $('#go2').disabled=true;
+ try{const d=await api('/api/auth/reset-password-with-code','POST',{email:resetEmail,code:$('#rcode').value.trim(),newPassword:$('#rpw').value});
+  show('signin');$('#email').value=resetEmail;$('#pw').value='';
+  setMsg($('#m'),d.message||'Password updated. You can now sign in.','ok')}
+ catch(er){setMsg(m,er.message,'err')}finally{$('#go2').disabled=false}};
+$('#f').onsubmit=async e=>{e.preventDefault();const m=$('#m');m.className='msg';$('#go').disabled=true;
+try{const d=await api('/api/auth/login','POST',{email:$('#email').value.trim(),password:$('#pw').value});saveSession(d);location.replace('/dashboard')}
+catch(er){m.textContent=er.message;m.className='msg err'}finally{$('#go').disabled=false}};
+</script></body></html>
