@@ -267,6 +267,197 @@ function register(app, deps) {
   setTimeout(warm, 1500);
   setInterval(warm, FRESH_MS).unref();
 
+  // ═════════════════════ CRUISE TECH LOGS - SMS NUMBERS PROVIDER ═════════════════════
+  // These routes are registered BEFORE the old BenOTP number routes, so they answer first.
+  //   Render environment:  CRUISE_API_KEY=<your token>     CRUISE_NETWORK=5   (5 = All Countries Short Term 1, 6 = Short Term 2)
+  // Flow: country -> service (with price) -> buy. Money is only ever taken for a service whose price could be read.
+  const CRUISE_BASE = 'https://api.cruisetechlogs.com';
+  const cruiseKey = () => String(process.env.CRUISE_API_KEY || '').trim();
+  const cruiseNetwork = () => String(process.env.CRUISE_NETWORK || '5').trim();
+  const cruiseType = () => 'short_term';
+
+  async function cruiseCall(path, params) {
+    const key = cruiseKey();
+    if (!key) throw new ProviderError('This service is not set up yet. Please contact support.', false);
+    let res;
+    try {
+      res = await axios.request({ method: 'GET', url: CRUISE_BASE + path, params, headers: { Authorization: 'Bearer ' + key, Accept: 'application/json' }, timeout: 30000, responseType: 'text', transformResponse: [(x) => x], validateStatus: () => true });
+    } catch (e) { throw new ProviderError('The provider could not be reached.', true); }
+    if (res.status >= 500) throw new ProviderError('The provider is having problems right now.', true);
+    let d;
+    try { d = JSON.parse(String(res.data || '')); } catch (e) { throw new ProviderError('The provider sent an unreadable answer.', true); }
+    const code = Number(d && d.code != null ? d.code : res.status);
+    const st = String((d && d.status) || '').toLowerCase();
+    if (res.status >= 400 || code >= 400 || (st && st !== 'success')) throw new ProviderError(String((d && d.message) || 'The provider refused the request.'), false);
+    return d;
+  }
+  const cruiseMem = new Map();
+  async function cruiseCached(key, ttl, fn) {
+    const c = cruiseMem.get(key);
+    if (c && Date.now() - c.at < ttl) return c.v;
+    const v = await fn();
+    cruiseMem.set(key, { at: Date.now(), v });
+    return v;
+  }
+  async function cruiseCountries() {
+    return cruiseCached('c', 10 * 60 * 1000, async () => {
+      const d = await cruiseCall('/rentals/countries', { network: cruiseNetwork(), type: cruiseType() });
+      const arr = (d.data && Array.isArray(d.data.countries)) ? d.data.countries : toList(d);
+      return arr.filter(c => c && c.id != null).map(c => ({ id: String(c.id), name: String(c.name || c.id) }));
+    });
+  }
+  // The id Cruise wants for "Buy Number" is a base64 text such as base64("aor||short_term||2||5||5").
+  function buyIdFor(it, country) {
+    for (const k of Object.keys(it)) {
+      const v = it[k];
+      if (typeof v === 'string' && v.length >= 12 && /^[A-Za-z0-9+/=%]+$/.test(v)) {
+        try { if (Buffer.from(decodeURIComponent(v), 'base64').toString('utf8').includes('||')) return v; } catch (e) { /* not an id */ }
+      }
+    }
+    const code = pick(it, ['code', 'serviceCode', 'service_code', 'short', 'id']);
+    if (code == null || typeof code === 'object') return '';
+    return Buffer.from([code, cruiseType(), country, cruiseNetwork(), cruiseNetwork()].join('||')).toString('base64');
+  }
+  function parseCruiseServices(d, country) {
+    let inner = d && d.data != null ? d.data : d;
+    if (inner && !Array.isArray(inner) && typeof inner === 'object') inner = inner.services || inner.list || inner.items || inner;
+    const out = [];
+    for (const it of toList(inner)) {
+      if (!it || typeof it !== 'object') continue;
+      const name = pick(it, ['name', 'serviceName', 'service_name', 'service', 'title', 'label']);
+      const cost = readPrice(it);
+      const id = buyIdFor(it, country);
+      if (!id || !name || !(cost > 0)) continue; // never sell what we cannot price
+      out.push({ id, name: String(name), cost });
+    }
+    return out;
+  }
+  async function cruiseServices(country) {
+    return cruiseCached('s:' + country, 2 * 60 * 1000, async () => {
+      const d = await cruiseCall('/rentals/services', { type: cruiseType(), network: cruiseNetwork(), countryID: country });
+      const list = parseCruiseServices(d, country);
+      if (!list.length) console.error('[cruise] no usable services for country', country, JSON.stringify(d).slice(0, 400));
+      return list;
+    });
+  }
+  function extractCode(msg) {
+    const t = String(msg || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#0?39;/g, "'");
+    const m = t.match(/(?<!\d)(\d{3})[- ](\d{3})(?!\d)/) || t.match(/(?<!\d)(\d{4,8})(?!\d)/);
+    return m ? m.slice(1).join('') : '';
+  }
+  async function cruiseCode(o) {
+    try {
+      const d = await cruiseCall('/rentals/getcode', { id: o.providerOrderId });
+      const arr = Array.isArray(d.data) ? d.data : (d.data ? [d.data] : []);
+      const m = arr.find(x => x && x.message);
+      if (!m) return null;
+      return { code: extractCode(m.message) || String(m.message).replace(/\s+/g, ' ').slice(0, 60), message: String(m.message) };
+    } catch (e) { return (e && e.ambiguous) ? undefined : null; } // null = nothing yet; undefined = could not check (provider unreachable)
+  }
+
+  app.get('/api/rado/numbers/countries', auth, async (req, res) => {
+    try { res.json(await cruiseCountries()); } catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
+  });
+  app.get('/api/rado/numbers/services', auth, async (req, res) => {
+    try {
+      const c = String(req.query.country || '');
+      if (!c) return res.json([]);
+      res.json((await cruiseServices(c)).map(s => ({ id: s.id, name: s.name })));
+    } catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
+  });
+  app.get('/api/rado/numbers/pools', auth, async (req, res) => {
+    try {
+      const c = String(req.query.country || ''), sid = String(req.query.service || '');
+      await loadCfg();
+      const s = (await cruiseServices(c)).find(x => x.id === sid);
+      if (!s) return res.json([]);
+      res.json([{ id: '1', name: 'Short term number', price: numberSell(s.cost, s.name.toLowerCase()) }]);
+    } catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
+  });
+
+  app.post('/api/rado/numbers/buy', auth, async (req, res) => {
+    const service = String(req.body.service || ''), country = String(req.body.country || '');
+    if (!service || !country) return res.status(400).json({ error: 'Choose a country and a service.' });
+    if (!lockUser(req.user._id)) return res.status(429).json({ error: 'Please wait, your last request is still running.' });
+    let order;
+    try {
+      await loadCfg();
+      const s = (await cruiseServices(country)).find(x => x.id === service);
+      if (!s) return res.status(400).json({ error: 'This service is not available right now. Please choose another.' });
+      const price = numberSell(s.cost, s.name.toLowerCase());
+      const expected = Number(req.body.expectedPrice);
+      if (Number.isFinite(expected) && expected > 0 && price > expected) return res.status(409).json({ error: 'The price changed to ₦' + price.toLocaleString() + '. Please try again.', price });
+      const ctyName = ((await cruiseCountries()).find(c => c.id === country) || {}).name || country;
+      order = await Order.create({ kind: 'number', userId: req.user._id, userEmail: req.user.email, title: s.name + ' number (' + ctyName + ')', service: s.name, country: ctyName, pool: '1', cost: s.cost, sellPrice: price, status: 'pending' });
+      const user = await debit(req.user, price, 'SMS number - ' + s.name + ' (' + ctyName + ')');
+      if (!user) { await Order.updateOne({ _id: order._id }, { $set: { status: 'failed', refunded: true, note: 'Insufficient balance' } }); return res.status(400).json({ error: 'Insufficient balance. Please fund your wallet.' }); }
+      let d;
+      try { d = await cruiseCall('/rentals/new', { id: s.id }); }
+      catch (e) {
+        if (e.ambiguous) {
+          await Order.updateOne({ _id: order._id }, { $set: { status: 'review', note: 'Provider outcome unknown: ' + e.message, updatedAt: new Date() } });
+          return res.status(202).json({ pending: true, message: 'We could not confirm your order. If a number was issued it will appear in your orders; otherwise contact support to be refunded.' });
+        }
+        await refund(order._id, e.message, 'failed');
+        return res.status(400).json({ error: clientMsg(e) + ' Nothing was charged.' });
+      }
+      const data = (d && d.data) || {};
+      const oid = data.ID || data.id || data.order_id, phone = data.number || data.phone || data.phone_number;
+      if (!oid || !phone) {
+        console.error('[cruise] buy answer unreadable:', JSON.stringify(d).slice(0, 300));
+        await Order.updateOne({ _id: order._id }, { $set: { status: 'review', note: 'Provider answer could not be read - money held, admin to check.', updatedAt: new Date() } });
+        return res.status(202).json({ pending: true, message: 'We could not confirm your order. If a number was issued it will appear in your orders; otherwise contact support to be refunded.' });
+      }
+      const paid = Number(data.amount);
+      if (Number.isFinite(paid) && paid > s.cost + 1) console.error('[cruise] provider charged', paid, 'but the list price was', s.cost, 'for order', String(order._id));
+      await Order.updateOne({ _id: order._id }, { $set: { providerOrderId: String(oid), phoneNumber: String(phone), updatedAt: new Date() } });
+      const fresh = await Order.findById(order._id);
+      res.json({ ...shape(fresh), ok: true, orderId: String(order._id), phoneNumber: String(phone), newBalance: user.balance });
+    } catch (e) {
+      console.error('[cruise] number buy failed:', e.message);
+      res.status(500).json({ error: 'Purchase failed. If you were charged, contact support and you will be refunded.' });
+    } finally { unlockUser(req.user._id); }
+  });
+
+  app.get('/api/rado/numbers/status/:id', auth, async (req, res) => {
+    try {
+      const o = await Order.findOne({ _id: req.params.id, userId: req.user._id, kind: 'number' });
+      if (!o) return res.status(404).json({ error: 'Order not found.' });
+      if (o.status === 'pending' && o.providerOrderId) {
+        const got = await cruiseCode(o);
+        if (got) { o.code = got.code; o.details = got.message; o.status = 'completed'; o.updatedAt = new Date(); await o.save(); }
+        else if (got !== undefined && Date.now() - new Date(o.createdAt).getTime() > ttlMs()) {
+          try { await cruiseCall('/rentals/close', { id: o.providerOrderId }); } catch (e) { /* still refund: no SMS arrived */ }
+          await refund(o._id, 'No SMS received in time', 'expired');
+        }
+      }
+      res.json(shape(await Order.findById(o._id)));
+    } catch (e) { res.status(500).json({ error: 'Could not check the status.' }); }
+  });
+  app.post('/api/rado/numbers/cancel/:id', auth, async (req, res) => {
+    try {
+      const o = await Order.findOne({ _id: req.params.id, userId: req.user._id, kind: 'number' });
+      if (!o) return res.status(404).json({ error: 'Order not found.' });
+      if (o.status !== 'pending') return res.status(400).json({ error: 'This order can no longer be cancelled.' });
+      const got = await cruiseCode(o);
+      if (got === undefined) return res.status(502).json({ error: 'We could not reach the provider to check this number. Please try again in a moment.' });
+      if (got) { o.code = got.code; o.details = got.message; o.status = 'completed'; await o.save(); return res.status(400).json({ error: 'The code has already arrived, so this order cannot be cancelled.' }); }
+      try { await cruiseCall('/rentals/close', { id: o.providerOrderId }); }
+      catch (e) { return res.status(400).json({ error: clientMsg(e) }); } // e.g. "can only be closed after 2 minutes"
+      await refund(o._id, 'Cancelled by customer', 'cancelled');
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: 'Could not cancel.' }); }
+  });
+  // Admin: shows what Cruise really sends back, to check the price/name/id fields were read correctly.
+  app.get('/api/rado/admin/cruise-test', anyAdminAuth, async (req, res) => {
+    try {
+      const country = String(req.query.country || '2');
+      const d = await cruiseCall('/rentals/services', { type: cruiseType(), network: cruiseNetwork(), countryID: country });
+      const parsed = parseCruiseServices(d, country);
+      res.json({ network: cruiseNetwork(), country, parsedCount: parsed.length, parsedSample: parsed.slice(0, 5), rawSample: JSON.stringify(d).slice(0, 1500) });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   app.get('/api/rado/numbers/services', auth, async (req, res) => {
     try {
       await loadCfg();
@@ -569,10 +760,10 @@ function register(app, deps) {
       const rows = await Order.find({ kind: 'number', status: 'pending', refunded: false, providerOrderId: { $exists: true, $ne: '' }, createdAt: { $lt: cutoff } }).limit(25);
       for (const o of rows) {
         try {
-          let st = {};
-          try { st = readStatus(await call(NUMBERS_PATH, { action: 'getStatus', order_id: o.providerOrderId })); } catch (e) { /* no answer: treat as no SMS */ }
-          if (st.code) { o.code = st.code; o.status = 'completed'; o.updatedAt = new Date(); await o.save(); continue; }
-          if (!st.cancelled && !st.expired) { try { await call(NUMBERS_PATH, { action: 'setStatus', order_id: o.providerOrderId, status: 8 }); } catch (e) { /* still refund: no SMS arrived */ } }
+          const got = await cruiseCode(o);
+          if (got === undefined) continue; // provider unreachable: try again next minute, never expire blindly
+          if (got) { o.code = got.code; o.details = got.message; o.status = 'completed'; o.updatedAt = new Date(); await o.save(); continue; }
+          try { await cruiseCall('/rentals/close', { id: o.providerOrderId }); } catch (e) { /* still refund: no SMS arrived */ }
           await refund(o._id, 'No SMS received in time', 'expired');
         } catch (e) { console.error('[benotp] expiry sweep failed for', String(o._id), e.message); }
       }
