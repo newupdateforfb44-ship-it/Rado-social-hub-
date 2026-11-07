@@ -303,7 +303,9 @@ function register(app, deps) {
     return cruiseCached('c', 10 * 60 * 1000, async () => {
       const d = await cruiseCall('/rentals/countries', { network: cruiseNetwork(), type: cruiseType() });
       const arr = (d.data && Array.isArray(d.data.countries)) ? d.data.countries : toList(d);
-      return arr.filter(c => c && c.id != null).map(c => ({ id: String(c.id), name: String(c.name || c.id) }));
+      const out = arr.filter(c => c && c.id != null).map(c => ({ id: String(c.id), name: String(c.name || c.id) }));
+      console.log('[cruise] countries loaded:', out.length, 'network', cruiseNetwork(), out.length < 5 ? JSON.stringify(d).slice(0, 600) : '');
+      return out;
     });
   }
   // The id Cruise wants for "Buy Number" is a base64 text such as base64("aor||short_term||2||5||5").
@@ -318,25 +320,48 @@ function register(app, deps) {
     if (code == null || typeof code === 'object') return '';
     return Buffer.from([code, cruiseType(), country, cruiseNetwork(), cruiseNetwork()].join('||')).toString('base64');
   }
+  function findArray(o, depth) {
+    if (o == null || typeof o !== 'object' || (depth || 0) > 5) return null;
+    if (Array.isArray(o)) return (o.length && o[0] && typeof o[0] === 'object') ? o : null;
+    for (const k of Object.keys(o)) { const r = findArray(o[k], (depth || 0) + 1); if (r) return r; }
+    return null;
+  }
+  const looseName = (it) => {
+    const n = pick(it, ['name', 'serviceName', 'service_name', 'service', 'title', 'label', 'app', 'platform']);
+    if (n != null && typeof n !== 'object') return String(n);
+    for (const k of Object.keys(it)) if (/name|service|title/i.test(k) && typeof it[k] === 'string' && it[k]) return it[k];
+    return '';
+  };
+  const looseCost = (it) => {
+    let c = readPrice(it);
+    if (c > 0) return c;
+    for (const k of Object.keys(it)) { if (/price|cost|amount|rate|fee|charge|ngn|naira/i.test(k) && typeof it[k] !== 'object') { const n = Number(String(it[k]).replace(/[^0-9.]/g, '')); if (n > 0) return n; } }
+    return NaN;
+  };
   function parseCruiseServices(d, country) {
     let inner = d && d.data != null ? d.data : d;
     if (inner && !Array.isArray(inner) && typeof inner === 'object') inner = inner.services || inner.list || inner.items || inner;
-    const out = [];
-    for (const it of toList(inner)) {
-      if (!it || typeof it !== 'object') continue;
-      const name = pick(it, ['name', 'serviceName', 'service_name', 'service', 'title', 'label']);
-      const cost = readPrice(it);
-      const id = buyIdFor(it, country);
-      if (!id || !name || !(cost > 0)) continue; // never sell what we cannot price
-      out.push({ id, name: String(name), cost });
-    }
+    const tryList = (list) => {
+      const out = [], seen = new Set();
+      for (const it of list) {
+        if (!it || typeof it !== 'object') continue;
+        const name = looseName(it), cost = looseCost(it), id = buyIdFor(it, country);
+        if (!id || !name || !(cost > 0) || seen.has(id)) continue; // never sell what we cannot price
+        seen.add(id);
+        out.push({ id, name, cost });
+      }
+      return out;
+    };
+    let out = tryList(toList(inner));
+    if (!out.length) { const arr = findArray(d); if (arr) out = tryList(arr); }
     return out;
   }
   async function cruiseServices(country) {
     return cruiseCached('s:' + country, 2 * 60 * 1000, async () => {
       const d = await cruiseCall('/rentals/services', { type: cruiseType(), network: cruiseNetwork(), countryID: country });
       const list = parseCruiseServices(d, country);
-      if (!list.length) console.error('[cruise] no usable services for country', country, JSON.stringify(d).slice(0, 400));
+      if (!list.length) console.error('[cruise] no usable services for country', country, 'network', cruiseNetwork(), '- raw answer:', JSON.stringify(d).slice(0, 1200));
+      else console.log('[cruise] services for country', country + ':', list.length);
       return list;
     });
   }
