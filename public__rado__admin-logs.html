@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin · Logs — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css">
+<meta name="robots" content="noindex,nofollow">
+<style>
+.top{background:var(--side);padding:12px 18px;display:flex;align-items:center;justify-content:space-between}
+.top .logo img{width:48px;height:48px}.top b{color:#fff;font-size:18px}
+.lg{display:flex;gap:14px;align-items:center}
+.lg img,.lg .ph{width:64px;height:64px;border-radius:12px;object-fit:cover;background:#e5e7eb;flex:none;display:grid;place-items:center;font-size:28px}
+.lg .info{flex:1;min-width:0}.lg .info b{display:block;font-size:19px;overflow:hidden;text-overflow:ellipsis}
+.lg .info span{color:var(--muted);font-size:15px;display:block}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.acts .btn{padding:8px 14px;font-size:15px}
+.tag{display:inline-block;background:#e0f2fe;color:#075985;border-radius:999px;padding:2px 10px;font-size:13px;margin-right:6px}
+.tag.off{background:#fee2e2;color:#991b1b}.tag.low{background:#fef3c7;color:#92400e}
+.hint{font-size:15px;color:var(--muted);margin:6px 0 0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+.prev{width:96px;height:96px;border-radius:14px;object-fit:cover;background:#e5e7eb;display:none;margin-top:10px}
+textarea{min-height:120px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px}
+.chkrow{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:18px}.chkrow input{width:auto}
+</style></head><body>
+<div class="top"><a class="logo" href="/"><img src="/rado/rado-logo.png" alt=""></a><b>Admin · Logs</b><a class="btn white" style="padding:8px 14px" href="/dashboard">Site</a></div>
+<main>
+
+<div class="card" id="gate" style="display:none"><h2>Admin passcode</h2><div id="gm" class="msg"></div>
+<label>Passcode</label><input id="pass" type="password" autocomplete="current-password">
+<button class="btn block" id="unlock" style="margin-top:16px">Unlock</button></div>
+
+<div id="app" style="display:none">
+ <div class="row" style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px">
+  <h1 style="margin:0;font-size:28px">Logs</h1><button class="btn green" id="addbtn">＋ Add a log</button></div>
+ <div id="msg" class="msg"></div>
+
+ <div class="card" id="formcard" style="display:none"><h2 id="ftitle">Add a log</h2>
+  <label>Name</label><input id="f_name" maxlength="120" placeholder="e.g. Facebook account (aged 2019)">
+  <div class="row2">
+   <div><label>Log type</label><select id="f_type"></select></div>
+   <div><label>Price (₦)</label><input id="f_price" type="number" min="1" step="any" inputmode="decimal"></div>
+  </div>
+  <label>Category</label><select id="f_cat"></select>
+  <input id="f_newcat" maxlength="60" placeholder="Type the new category name" style="display:none;margin-top:10px">
+  <label>Description</label><textarea id="f_desc" style="min-height:90px;font-family:inherit" placeholder="What the buyer gets, any rules or tips"></textarea>
+
+  <label>Logo (optional)</label>
+  <input id="f_pic" type="file" accept="image/png,image/jpeg,image/webp">
+  <img id="prev" class="prev" alt="">
+  <p class="hint" id="pichint">If you skip this, the site uses the logo you added under Product logos when the name matches (for example "Facebook").</p>
+  <div class="chkrow" id="rmrow" style="display:none"><input type="checkbox" id="f_rmpic"><label for="f_rmpic" style="margin:0;font-size:18px">Remove the uploaded logo</label></div>
+
+  <label id="stocklabel">Stock — the details you sell</label>
+  <textarea id="f_stock" spellcheck="false"></textarea>
+  <p class="hint" id="stockhint"></p>
+  <div class="chkrow" id="clrrow" style="display:none"><input type="checkbox" id="f_clear"><label for="f_clear" style="margin:0;font-size:18px">Remove all current stock first</label></div>
+  <div class="chkrow"><input type="checkbox" id="f_on" checked><label for="f_on" style="margin:0;font-size:18px">Show on the Products page</label></div>
+
+  <div style="display:flex;gap:10px;margin-top:20px"><button class="btn white" style="border:1px solid #9ca3af" id="cancel">Cancel</button><button class="btn green" id="save" style="flex:1">Save log</button></div>
+ </div>
+
+ <div id="list"></div>
+</div>
+</main>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const naira=n=>'₦'+Number(n||0).toLocaleString('en-NG');
+let pass=''; try{pass=sessionStorage.getItem('rado_admin_pass')||''}catch(e){}
+let types={},cats=[],logs=[],editing=null,picData='';
+const hints={
+ login:{ph:'email1@example.com:password1\nemail2@example.com:password2',h:'One account per line. Each line is sold as one unit, for example email:password.'},
+ link:{ph:'https://example.com/access/abc123\nhttps://example.com/access/def456',h:'One link per line. Each line is sold as one unit.'},
+ details:{ph:'Username: john\nPassword: 1234\nRecovery email: a@b.com\n---\nUsername: mary\nPassword: 5678\nRecovery email: c@d.com',h:'Details can run over several lines. Put a line with three dashes (---) between one account and the next.'},
+ other:{ph:'Anything you want the buyer to receive.\nOne unit per line, or use --- between units.',h:'One unit per line, or put --- between units that run over several lines.'}
+};
+async function A(method,url,body){
+ const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-passcode':pass},body:body?JSON.stringify(body):undefined});
+ let d={};try{d=await r.json()}catch(e){}
+ if(r.status===403){const e=new Error('Wrong passcode');e.code=403;throw e}
+ if(!r.ok)throw new Error(d.error||'Something went wrong');
+ return d;
+}
+function say(t,c){const m=$('#msg');m.textContent=t;m.className='msg '+(c||'ok');if(t)setTimeout(()=>{if(m.textContent===t)m.className='msg'},5000)}
+
+async function load(){
+ const d=await A('GET','/api/rado/admin/rlogs');
+ types=d.types;cats=d.categories;logs=d.logs;
+ $('#f_type').innerHTML=Object.keys(types).map(k=>`<option value="${k}">${esc(types[k])}</option>`).join('');
+ draw();
+}
+function catOptions(sel){
+ return cats.map(c=>`<option value="${esc(c)}"${c===sel?' selected':''}>${esc(c)}</option>`).join('')+'<option value="__new__">➕ Create a new category…</option>';
+}
+function draw(){
+ $('#list').innerHTML=logs.map(l=>`<div class="card"><div class="lg">${l.picture?`<img src="${esc(l.picture)}" alt="" onerror="this.outerHTML='<div class=&quot;ph&quot;>📦</div>'">`:'<div class="ph">📦</div>'}
+ <div class="info"><b>${esc(l.name)}</b><span>${esc(l.category)} · ${esc(types[l.logType]||l.logType)}</span><span><b style="display:inline;font-size:17px">${naira(l.price)}</b></span></div></div>
+ <div style="margin-top:10px"><span class="tag ${l.stock>0?(l.stock<4?'low':''):'off'}">${l.stock} in stock</span><span class="tag">${l.sold} sold</span>${l.enabled?'':'<span class="tag off">Hidden</span>'}</div>
+ <div class="acts"><button class="btn" data-e="${l.id}">Edit / add stock</button><button class="btn white" style="border:1px solid #9ca3af" data-t="${l.id}">${l.enabled?'Hide':'Show'}</button><button class="btn white" style="border:1px solid #fca5a5;color:#b91c1c" data-d="${l.id}">Delete</button></div></div>`).join('')||'<div class="card"><p class="muted">No logs yet. Press “Add a log” to create your first one.</p></div>';
+ document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>openForm(logs.find(x=>x.id===b.dataset.e)));
+ document.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const l=logs.find(x=>x.id===b.dataset.t);try{await A('PUT','/api/rado/admin/rlogs/'+l.id,{enabled:!l.enabled});await load()}catch(e){say(e.message,'err')}});
+ document.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{const l=logs.find(x=>x.id===b.dataset.d);if(!confirm('Delete “'+l.name+'” and all its stock? This cannot be undone.'))return;try{await A('DELETE','/api/rado/admin/rlogs/'+l.id);say('Deleted.');await load()}catch(e){say(e.message,'err')}});
+}
+function setHints(){const h=hints[$('#f_type').value]||hints.other;$('#f_stock').placeholder=h.ph;$('#stockhint').textContent=h.h}
+function openForm(l){
+ editing=l||null;picData='';
+ $('#ftitle').textContent=l?'Edit log':'Add a log';
+ $('#f_name').value=l?l.name:'';$('#f_price').value=l?l.price:'';$('#f_desc').value=l?(l.description||''):'';
+ $('#f_type').value=l?l.logType:'login';
+ $('#f_cat').innerHTML=catOptions(l?l.category:(cats[0]||''));if(!cats.length)$('#f_cat').value='__new__';
+ $('#f_newcat').value='';$('#f_newcat').style.display=$('#f_cat').value==='__new__'?'block':'none';
+ $('#f_pic').value='';$('#prev').style.display=l&&l.picture?'block':'none';$('#prev').src=l&&l.picture?l.picture:'';
+ $('#rmrow').style.display=l&&l.hasPicture?'flex':'none';$('#f_rmpic').checked=false;
+ $('#f_stock').value='';$('#clrrow').style.display=l?'flex':'none';$('#f_clear').checked=false;
+ $('#stocklabel').textContent=l?'Add more stock ('+l.stock+' in stock now)':'Stock — the details you sell';
+ $('#f_on').checked=l?l.enabled:true;setHints();
+ $('#formcard').style.display='block';$('#formcard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeForm(){$('#formcard').style.display='none';editing=null}
+$('#addbtn').onclick=()=>openForm(null);$('#cancel').onclick=closeForm;
+$('#f_type').onchange=setHints;
+$('#f_cat').onchange=()=>{const n=$('#f_cat').value==='__new__';$('#f_newcat').style.display=n?'block':'none';if(n)$('#f_newcat').focus()};
+$('#f_pic').onchange=()=>{
+ const f=$('#f_pic').files[0];picData='';if(!f)return;
+ if(!/^image\/(png|jpeg|webp)$/.test(f.type)){say('Choose a PNG, JPG or WEBP picture.','err');$('#f_pic').value='';return}
+ const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{
+  const max=320,k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);picData=c.toDataURL('image/png');$('#prev').src=picData;$('#prev').style.display='block'};im.src=rd.result};rd.readAsDataURL(f);
+};
+$('#save').onclick=async()=>{
+ let cat=$('#f_cat').value;if(cat==='__new__')cat=$('#f_newcat').value.trim();
+ if(!cat){say('Choose a category or type a new one.','err');return}
+ const body={name:$('#f_name').value.trim(),logType:$('#f_type').value,price:$('#f_price').value,category:cat,description:$('#f_desc').value,enabled:$('#f_on').checked};
+ if(picData)body.picture=picData;
+ if(editing){if($('#f_rmpic').checked)body.removePicture=true;body.addStock=$('#f_stock').value;body.clearStock=$('#f_clear').checked}
+ else body.stock=$('#f_stock').value;
+ const b=$('#save');b.disabled=true;b.textContent='Saving…';
+ try{const d=await A(editing?'PUT':'POST','/api/rado/admin/rlogs'+(editing?'/'+editing.id:''),body);
+  say((editing?'Saved.':'Log added.')+' '+d.stock+' in stock.');closeForm();await load();window.scrollTo({top:0,behavior:'smooth'})}
+ catch(e){say(e.message,'err');window.scrollTo({top:0,behavior:'smooth'})}
+ finally{b.disabled=false;b.textContent='Save log'}
+};
+
+async function start(){
+ try{await load();$('#gate').style.display='none';$('#app').style.display='block'}
+ catch(e){
+  $('#app').style.display='none';$('#gate').style.display='block';
+  if(e.code!==403)$('#gm').textContent=e.message,$('#gm').className='msg err';
+  else if(pass){$('#gm').textContent='Wrong passcode.';$('#gm').className='msg err'}
+  try{sessionStorage.removeItem('rado_admin_pass')}catch(x){}
+ }
+}
+$('#unlock').onclick=()=>{pass=$('#pass').value.trim();if(!pass)return;try{sessionStorage.setItem('rado_admin_pass',pass)}catch(e){}start()};
+$('#pass').onkeydown=e=>{if(e.key==='Enter')$('#unlock').click()};
+if(pass)start();else{$('#gate').style.display='block'}
+})();
+</script></body></html>
