@@ -5565,6 +5565,7 @@ app.get('/api/admin/site-links', anyAdminAuth, async (req, res) => {
 app.post('/api/admin/site-links', anyAdminAuth, async (req, res) => {
  try {
  const { whatsappNumber, adminPhone, whatsappGroupLink, whatsappChannelLink , telegramUsername, telegramLink, telegramChannelLink, telegramCommunityLink, whatsappChatLink, supportHours } = req.body;
+ const isPlaceholder = v => { const x = String(v == null ? '' : v).trim(); return x === '' || x === '#'; };
  const update = { updatedAt: new Date() };
  if (whatsappNumber !== undefined) {
  const cleaned = String(whatsappNumber).replace(/[^\d]/g, '');
@@ -5579,12 +5580,12 @@ app.post('/api/admin/site-links', anyAdminAuth, async (req, res) => {
  }
  if (whatsappGroupLink !== undefined) {
  const link = String(whatsappGroupLink).trim();
- if (link && !link.startsWith('https://')) return res.status(400).json({ error: 'Group link must start with https://' });
+ if (!isPlaceholder(link) && !link.startsWith('https://')) return res.status(400).json({ error: 'Group link must start with https://' });
  update.whatsappGroupLink = link;
  }
  if (whatsappChannelLink !== undefined) {
  const link = String(whatsappChannelLink).trim();
- if (link && !link.startsWith('https://')) return res.status(400).json({ error: 'Channel link must start with https://' });
+ if (!isPlaceholder(link) && !link.startsWith('https://')) return res.status(400).json({ error: 'Channel link must start with https://' });
  update.whatsappChannelLink = link;
  }
   // NOTE: telegramUsername is treated as the source of truth. It's processed
@@ -5593,7 +5594,7 @@ app.post('/api/admin/site-links', anyAdminAuth, async (req, res) => {
   // labeled "auto-filled" — it doesn't actually track the username input live),
   // so if telegramLink were applied last it could silently overwrite a fresh
   // username change with the stale link that was sitting in that field.
-  if (telegramLink !== undefined && String(telegramLink).trim()) {
+  if (telegramLink !== undefined && !isPlaceholder(telegramLink)) {
    const link = String(telegramLink).trim();
    if (!/^https:\/\//.test(link)) return res.status(400).json({ error: 'Telegram link must start with https://' });
    update.telegramLink = link;
@@ -5606,7 +5607,7 @@ app.post('/api/admin/site-links', anyAdminAuth, async (req, res) => {
   }
   if (whatsappChatLink !== undefined) {
    const link = String(whatsappChatLink).trim();
-   if (link && !/^https:\/\//.test(link)) return res.status(400).json({ error: 'WhatsApp link must start with https://' });
+   if (!isPlaceholder(link) && !/^https:\/\//.test(link)) return res.status(400).json({ error: 'WhatsApp link must start with https://' });
    update.whatsappChatLink = link;
   }
   if (supportHours !== undefined) update.supportHours = String(supportHours).trim().slice(0, 120);
