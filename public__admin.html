@@ -238,7 +238,72 @@ tr:hover td{background:rgba(255,255,255,.035)}
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="theme-color" content="#ffffff"/>
-<link rel="stylesheet" href="/css/rado-final.css?v=1"><link rel="stylesheet" href="/css/admin-customer-theme.css?v=1"></head>
+<link rel="stylesheet" href="/css/rado-final.css?v=1"><link rel="stylesheet" href="/css/admin-customer-theme.css?v=1"><style id="adm-polish">
+/* ===== Admin polish: clear, bold, well-spaced menu and pages ===== */
+.sidebar .sb-label,.adm-drawer .sb-label{font-size:11.5px!important;font-weight:800!important;letter-spacing:1.4px!important;color:#9fb4e6!important;padding:16px 12px 8px!important}
+.sidebar .sb-group,.adm-drawer .sb-group{margin-bottom:6px!important}
+.sidebar .sb-item,.adm-drawer .sb-item{display:flex!important;align-items:center!important;gap:12px!important;padding:12px 14px!important;margin:0 0 4px!important;border-radius:10px!important;
+  background:transparent!important;border:0!important;border-left:3px solid transparent!important;color:#eef3ff!important;font-size:14.5px!important;font-weight:700!important;line-height:1.3!important;opacity:1!important}
+.sidebar .sb-item .sb-icon,.adm-drawer .sb-item .sb-icon{color:#bcd0ff!important;width:20px!important;font-size:17px!important}
+.sidebar .sb-item .sb-chev,.adm-drawer .sb-item .sb-chev{opacity:.55!important;color:#eef3ff!important}
+.sidebar .sb-item:hover,.adm-drawer .sb-item:hover{background:rgba(255,255,255,.08)!important;color:#fff!important}
+.sidebar .sb-item.active,.adm-drawer .sb-item.active{background:#1a6dff!important;color:#fff!important;border-left-color:#8fd0ff!important;box-shadow:0 4px 14px rgba(26,109,255,.35)!important}
+.sidebar .sb-item.active .sb-icon,.adm-drawer .sb-item.active .sb-icon,.sidebar .sb-item.active .sb-chev,.adm-drawer .sb-item.active .sb-chev{color:#fff!important;opacity:1!important}
+.sidebar .sb-item.accent,.sidebar .sb-item.accent-green,.adm-drawer .sb-item.accent,.adm-drawer .sb-item.accent-green{background:transparent!important;border:0!important;border-left:3px solid transparent!important}
+.sidebar .sb-item.accent.active,.adm-drawer .sb-item.accent.active,.sidebar .sb-item.accent-green.active,.adm-drawer .sb-item.accent-green.active{background:#1a6dff!important;border-left-color:#8fd0ff!important}
+.sidebar .sb-item.accent-green .sb-icon{color:#bcd0ff!important}
+.adm-drawer .sb-text,.sidebar .sb-text{white-space:normal!important}
+@media(max-width:900px){.adm-drawer .sb-item{font-size:16px!important;padding:14px 14px!important}.adm-drawer .sb-label{font-size:12px!important}}
+.nav-search input{font-size:14px!important;padding:11px 14px!important;font-weight:600!important}
+
+/* pages */
+.main .sec{padding:24px!important;margin-bottom:24px!important}
+.main .sec-title{font-size:17px!important;font-weight:800!important;margin-bottom:18px!important;padding-bottom:14px!important;flex-wrap:wrap;gap:10px 12px!important}
+.main label{font-size:13.5px!important;font-weight:700!important;color:var(--t1)!important;margin-bottom:8px!important}
+.main input,.main select,.main textarea{font-size:14.5px!important;padding:12px 14px!important}
+.main .fg{margin-bottom:20px!important}
+.main .form-row{gap:18px!important}
+.main .info-box{font-size:14px!important;line-height:1.6!important;padding:14px 16px!important;margin-bottom:20px!important}
+.main .btn-gold,.main .btn-primary,.main .btn-sm,.main .btn{margin:6px 10px 6px 0}
+.main .btn-gold{padding:12px 24px!important;font-size:14.5px!important}
+.main .btn-sm{padding:10px 16px!important;font-size:13.5px!important;font-weight:700!important}
+.main th{padding:13px 16px!important}.main td{padding:15px 16px!important}
+.main table{border-spacing:0}
+.main .stat-row{gap:16px!important;margin-bottom:26px!important}
+.main .sc-lbl{font-size:12.5px!important}
+.main .item-card{padding:18px!important;gap:16px!important}
+/* Add logs page */
+.al-add{width:auto!important;margin:0 0 0 auto!important;padding:10px 18px!important}
+.al-add,#al_save{background:#1a6dff!important;color:#fff!important;border:0!important}
+.al-form input:not([type=checkbox]),.al-form select,.al-form textarea{width:100%!important;max-width:none!important}
+.al-form .fg{min-width:0}
+.al-msg{display:none;padding:12px 16px;border-radius:10px;margin:0 0 18px;font-size:14px;font-weight:600}
+.al-msg.ok{display:block;background:#dcfce7;color:#166534;border:1px solid #86efac}
+.al-msg.err{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.al-form{background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:22px;margin-top:6px}
+.al-h{margin:0 0 20px;font-size:18px;font-weight:800;color:var(--t1)}
+.al-hint{font-size:13px;color:var(--t2);margin-top:8px;line-height:1.5}
+.al-mono{font-family:ui-monospace,Menlo,Consolas,monospace!important}
+.al-check{display:flex!important;align-items:center;gap:10px;margin:14px 0 0!important;cursor:pointer}
+.al-check input{width:auto!important;margin:0}
+.al-prev{display:none;width:96px;height:96px;border-radius:14px;object-fit:cover;background:var(--bg4);margin-top:12px}
+.al-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.al-actions .btn-gold,.al-actions .btn-sm{margin:0!important;width:auto!important}
+.al-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}
+.al-top{display:flex;gap:16px;align-items:center}
+.al-pic{width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--bg4);flex:none}
+.al-ph{display:grid;place-items:center;font-size:28px}
+.al-info{min-width:0;flex:1}.al-name{font-size:16px;font-weight:800;color:var(--t1);overflow:hidden;text-overflow:ellipsis}
+.al-meta{font-size:13px;color:var(--t2);margin-top:3px}.al-price{font-size:17px;font-weight:800;color:#0f4fd6;margin-top:4px}
+.al-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.al-tag{font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;background:var(--bg4);color:var(--t1)}
+.al-tag.ok{background:#dcfce7;color:#166534}.al-tag.low{background:#fef3c7;color:#92400e}.al-tag.off{background:#fee2e2;color:#991b1b}
+.al-desc{font-size:13.5px;color:var(--t2);margin-top:12px;line-height:1.5;white-space:pre-line}
+.al-card .al-actions{margin-top:16px;gap:10px}.al-del{color:#b91c1c!important;border-color:#fca5a5!important}
+.al-count{font-size:13px;font-weight:600;color:var(--t2);margin-left:auto}
+.al-empty{padding:30px 10px;text-align:center;color:var(--t2);font-size:14.5px}
+</style>
+</head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="i-check-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></g></symbol>
@@ -397,9 +462,42 @@ tr:hover td{background:rgba(255,255,255,.035)}
 
     <div id="tab-addlogs" class="tab-panel">
       <div class="sec">
-        <div class="sec-title"><svg class="icon i-package" aria-hidden="true"><use href="#i-package"/></svg> Add logs</div>
-        <div class="info-box">Add your own logs to sell: give each one a <b>name</b>, a <b>category</b> (pick one or create a new one), a <b>price</b>, an optional <b>logo</b> and a <b>description</b>, then choose the <b>type</b> (email &amp; password, link, account details, other) and paste the stock, one item per line. Every log shows on the customers' Products page like any other product. If you do not upload a logo, the logo you saved under <b>Services &amp; Prices &rarr; Product logos (by name)</b> is used when the name matches.</div>
-        <a class="btn-gold" style="display:inline-block;width:auto;text-decoration:none;margin-top:6px" href="/admin-logs">Open the Add logs page &rarr;</a>
+        <div class="sec-title"><svg class="icon i-package" aria-hidden="true"><use href="#i-package"/></svg> Add logs
+          <button class="btn-gold al-add" type="button" onclick="alOpenForm()">+ Add a log</button></div>
+        <div class="info-box">Give each log a <b>name</b>, a <b>category</b> (pick one or create a new one), a <b>price</b>, an optional <b>logo</b> and a <b>description</b>, choose the <b>type</b> (email &amp; password, link, account details, other) and paste the stock, one item per line. It then shows on the customers' Products page like any other product.</div>
+        <div id="alMsg" class="al-msg"></div>
+
+        <div id="alForm" class="al-form" style="display:none">
+          <h3 id="alFormTitle" class="al-h">Add a log</h3>
+          <div class="form-row">
+            <div class="fg"><label for="al_name">Log name</label><input id="al_name" maxlength="120" placeholder="e.g. Facebook account (aged 2019)"/></div>
+            <div class="fg"><label for="al_price">Price (&#8358;)</label><input id="al_price" type="number" min="1" step="any" inputmode="decimal" placeholder="e.g. 2500"/></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label for="al_type">Type of log</label><select id="al_type" onchange="alHints()"></select></div>
+            <div class="fg"><label for="al_cat">Category</label><select id="al_cat" onchange="alCatChange()"></select>
+              <input id="al_newcat" maxlength="60" placeholder="Type the new category name" style="display:none;margin-top:10px"/></div>
+          </div>
+          <div class="fg"><label for="al_desc">Description</label><textarea id="al_desc" rows="3" placeholder="What the buyer gets, any rules or tips"></textarea></div>
+          <div class="fg"><label for="al_pic">Logo (optional)</label>
+            <input id="al_pic" type="file" accept="image/png,image/jpeg,image/webp" onchange="alPickPic()"/>
+            <img id="al_prev" class="al-prev" alt=""/>
+            <div class="al-hint">If you skip this, the logo you saved under <b>Services &amp; Prices &rarr; Product logos (by name)</b> is used when the name matches (for example "Facebook").</div>
+            <label id="al_rmrow" class="al-check" style="display:none"><input type="checkbox" id="al_rmpic"/> Remove the uploaded logo</label></div>
+          <div class="fg"><label id="al_stocklabel" for="al_stock">Stock</label><textarea id="al_stock" rows="7" spellcheck="false" class="al-mono"></textarea>
+            <div class="al-hint" id="al_stockhint"></div>
+            <label id="al_clrrow" class="al-check" style="display:none"><input type="checkbox" id="al_clear"/> Remove all current stock first</label></div>
+          <label class="al-check"><input type="checkbox" id="al_on" checked/> Show on the Products page</label>
+          <div class="al-actions">
+            <button class="btn-sm" type="button" onclick="alCloseForm()">Cancel</button>
+            <button class="btn-gold" type="button" id="al_save" onclick="alSave()">Save log</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">Your logs <span id="alCount" class="al-count"></span></div>
+        <div id="alList"><div class="al-empty">Loading&hellip;</div></div>
       </div>
     </div>
 
@@ -1095,9 +1193,9 @@ const ADMIN_NAV = [
     { tab:'dashboard', icon:'i-bar-chart', label:'Dashboard' },
   ]},
   { group:'Services', owner:true, items:[
-    { tab:'pricing', icon:'i-banknote', label:'Services & Prices (markup, edit prices)', owner:true, accent:'accent', run:'rpLoad',
+    { tab:'pricing', icon:'i-banknote', label:'Services & Prices (markup, edit prices)', owner:true, run:'rpLoad',
       keywords:'price prices markup buy number marketplace products sms services hide profit refund orders' },
-    { tab:'addlogs', icon:'i-package', label:'Add logs (accounts, links, details to sell)', owner:true, accent:'accent',
+    { tab:'addlogs', icon:'i-package', label:'Add logs (accounts, links, details to sell)', owner:true, run:'alLoad',
       keywords:'add log logs category stock email password link account details product logo sell' },
   ]},
   { group:'Users & wallet', owner:true, items:[
@@ -1112,9 +1210,9 @@ const ADMIN_NAV = [
     { tab:'deptutorials',    icon:'i-plug',     label:'Deposit tutorials & payment methods', owner:true, keywords:'tutorial video payment method enable disable gateway' },
   ]},
   { group:'Site', items:[
-    { tab:'sitelinks',    icon:'i-link', label:'WhatsApp & Telegram contacts', accent:'accent-green' },
+    { tab:'sitelinks',    icon:'i-link', label:'WhatsApp & Telegram contacts' },
     { tab:'welcomepopup', icon:'i-zap',  label:'Join-WhatsApp popup (on/off, text)', owner:true, keywords:'welcome popup whatsapp channel announcement message' },
-    { tab:'ops',          icon:'i-zap', label:'Control room (maintenance, limits, backup)', owner:true, accent:'accent', keywords:'maintenance close site deposits limits test gateway daily summary email backup errors' },
+    { tab:'ops',          icon:'i-zap', label:'Control room (maintenance, limits, backup)', owner:true, keywords:'maintenance close site deposits limits test gateway daily summary email backup errors' },
   ]},
 ];
 const ADMIN_TAB_LABELS = {};
@@ -2643,6 +2741,87 @@ async function loadDashboard() {
 }
 function initAdmin() {
   loadDashboard(); loadUsers(); refreshCreditUsers();
+}
+
+/* ───────── ADD LOGS (inside the admin panel) ───────── */
+let alTypes={},alCats=[],alLogs=[],alEditing=null,alPicData='';
+const AL_HINTS={
+  login:{ph:'email1@example.com:password1\nemail2@example.com:password2',h:'One account per line. Each line is sold as one unit, for example email:password.'},
+  link:{ph:'https://example.com/access/abc123\nhttps://example.com/access/def456',h:'One link per line. Each line is sold as one unit.'},
+  details:{ph:'Username: john\nPassword: 1234\nRecovery email: a@b.com\n---\nUsername: mary\nPassword: 5678\nRecovery email: c@d.com',h:'Details can run over several lines. Put a line with three dashes (---) between one account and the next.'},
+  other:{ph:'Anything you want the buyer to receive.\nOne unit per line, or use --- between units.',h:'One unit per line, or put --- between units that run over several lines.'}
+};
+const alNaira=n=>'₦'+Number(n||0).toLocaleString('en-NG');
+function alSay(t,ok){const m=document.getElementById('alMsg');m.textContent=t||'';m.className='al-msg'+(t?(ok?' ok':' err'):'');if(t)setTimeout(()=>{if(m.textContent===t){m.textContent='';m.className='al-msg'}},6000)}
+async function alLoad(){
+  try{
+    const d=await aFetch('/api/rado/admin/rlogs');
+    alTypes=d.types||{};alCats=d.categories||[];alLogs=d.logs||[];
+    document.getElementById('al_type').innerHTML=Object.keys(alTypes).map(k=>`<option value="${k}">${esc(alTypes[k])}</option>`).join('');
+    alDraw();
+  }catch(e){document.getElementById('alList').innerHTML='<div class="al-empty">'+esc(e.message)+'</div>'}
+}
+function alDraw(){
+  document.getElementById('alCount').textContent=alLogs.length?alLogs.length+' total':'';
+  document.getElementById('alList').innerHTML=alLogs.map(l=>`
+   <div class="al-card">
+     <div class="al-top">
+       ${l.picture?`<img class="al-pic" src="${esc(l.picture)}" alt="" onerror="this.outerHTML='<div class=&quot;al-pic al-ph&quot;>&#128230;</div>'">`:'<div class="al-pic al-ph">&#128230;</div>'}
+       <div class="al-info"><div class="al-name">${esc(l.name)}</div>
+         <div class="al-meta">${esc(l.category)} &middot; ${esc(alTypes[l.logType]||l.logType)}</div>
+         <div class="al-price">${alNaira(l.price)}</div></div>
+     </div>
+     <div class="al-tags"><span class="al-tag ${l.stock>0?(l.stock<4?'low':'ok'):'off'}">${l.stock} in stock</span><span class="al-tag">${l.sold} sold</span>${l.enabled?'<span class="al-tag ok">Visible</span>':'<span class="al-tag off">Hidden</span>'}</div>
+     ${l.description?`<div class="al-desc">${esc(l.description)}</div>`:''}
+     <div class="al-actions">
+       <button class="btn-sm" type="button" data-e="${l.id}">Edit / add stock</button>
+       <button class="btn-sm" type="button" data-t="${l.id}">${l.enabled?'Hide':'Show'}</button>
+       <button class="btn-sm al-del" type="button" data-d="${l.id}">Delete</button>
+     </div>
+   </div>`).join('')||'<div class="al-empty">No logs yet. Press &ldquo;+ Add a log&rdquo; to create your first one.</div>';
+  document.querySelectorAll('#alList [data-e]').forEach(b=>b.onclick=()=>alOpenForm(alLogs.find(x=>x.id===b.dataset.e)));
+  document.querySelectorAll('#alList [data-t]').forEach(b=>b.onclick=async()=>{const l=alLogs.find(x=>x.id===b.dataset.t);try{await aFetch('/api/rado/admin/rlogs/'+l.id,'PUT',{enabled:!l.enabled});await alLoad()}catch(e){alSay(e.message)}});
+  document.querySelectorAll('#alList [data-d]').forEach(b=>b.onclick=async()=>{const l=alLogs.find(x=>x.id===b.dataset.d);if(!confirm('Delete "'+l.name+'" and all its stock? This cannot be undone.'))return;try{await aFetch('/api/rado/admin/rlogs/'+l.id,'DELETE');alSay('Deleted.',true);await alLoad()}catch(e){alSay(e.message)}});
+}
+function alCatOptions(sel){return alCats.map(c=>`<option value="${esc(c)}"${c===sel?' selected':''}>${esc(c)}</option>`).join('')+'<option value="__new__">+ Create a new category&hellip;</option>'}
+function alHints(){const h=AL_HINTS[document.getElementById('al_type').value]||AL_HINTS.other;document.getElementById('al_stock').placeholder=h.ph;document.getElementById('al_stockhint').textContent=h.h}
+function alCatChange(){const n=document.getElementById('al_cat').value==='__new__';const i=document.getElementById('al_newcat');i.style.display=n?'block':'none';if(n)i.focus()}
+function alOpenForm(l){
+  alEditing=l||null;alPicData='';const $=id=>document.getElementById(id);
+  $('alFormTitle').textContent=l?'Edit log':'Add a log';
+  $('al_name').value=l?l.name:'';$('al_price').value=l?l.price:'';$('al_desc').value=l?(l.description||''):'';
+  $('al_type').value=l?l.logType:'login';
+  $('al_cat').innerHTML=alCatOptions(l?l.category:(alCats[0]||''));if(!alCats.length)$('al_cat').value='__new__';
+  $('al_newcat').value='';$('al_newcat').style.display=$('al_cat').value==='__new__'?'block':'none';
+  $('al_pic').value='';$('al_prev').style.display=l&&l.picture?'block':'none';$('al_prev').src=l&&l.picture?l.picture:'';
+  $('al_rmrow').style.display=l&&l.hasPicture?'flex':'none';$('al_rmpic').checked=false;
+  $('al_stock').value='';$('al_clrrow').style.display=l?'flex':'none';$('al_clear').checked=false;
+  $('al_stocklabel').textContent=l?'Add more stock ('+l.stock+' in stock now)':'Stock — the details you sell';
+  $('al_on').checked=l?l.enabled:true;alHints();
+  $('alForm').style.display='block';$('alForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function alCloseForm(){document.getElementById('alForm').style.display='none';alEditing=null}
+function alPickPic(){
+  const f=document.getElementById('al_pic').files[0];alPicData='';if(!f)return;
+  if(!/^image\/(png|jpeg|webp)$/.test(f.type)){alSay('Choose a PNG, JPG or WEBP picture.');document.getElementById('al_pic').value='';return}
+  const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{
+    const k=Math.min(1,320/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);alPicData=c.toDataURL('image/png');
+    const pv=document.getElementById('al_prev');pv.src=alPicData;pv.style.display='block'};im.src=rd.result};rd.readAsDataURL(f);
+}
+async function alSave(){
+  const $=id=>document.getElementById(id);
+  let cat=$('al_cat').value;if(cat==='__new__')cat=$('al_newcat').value.trim();
+  if(!cat){alSay('Choose a category or type a new one.');return}
+  const body={name:$('al_name').value.trim(),logType:$('al_type').value,price:$('al_price').value,category:cat,description:$('al_desc').value,enabled:$('al_on').checked};
+  if(alPicData)body.picture=alPicData;
+  if(alEditing){if($('al_rmpic').checked)body.removePicture=true;body.addStock=$('al_stock').value;body.clearStock=$('al_clear').checked}
+  else body.stock=$('al_stock').value;
+  const b=$('al_save');b.disabled=true;b.textContent='Saving…';
+  try{const d=await aFetch('/api/rado/admin/rlogs'+(alEditing?'/'+alEditing.id:''),alEditing?'PUT':'POST',body);
+    alSay((alEditing?'Saved. ':'Log added. ')+d.stock+' in stock.',true);alCloseForm();await alLoad();window.scrollTo({top:0,behavior:'smooth'})}
+  catch(e){alSay(e.message);window.scrollTo({top:0,behavior:'smooth'})}
+  finally{b.disabled=false;b.textContent='Save log'}
 }
 </script>
 
