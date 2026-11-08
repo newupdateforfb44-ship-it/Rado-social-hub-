@@ -65,7 +65,7 @@ textarea{min-height:120px;font-family:ui-monospace,Menlo,Consolas,monospace;font
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const naira=n=>'₦'+Number(n||0).toLocaleString('en-NG');
-let pass=''; try{pass=sessionStorage.getItem('rado_admin_pass')||''}catch(e){}
+let pass=''; try{pass=sessionStorage.getItem('rado_admin_pass')||sessionStorage.getItem('rsh_admin_pass')||''}catch(e){}
 let types={},cats=[],logs=[],editing=null,picData='';
 const hints={
  login:{ph:'email1@example.com:password1\nemail2@example.com:password2',h:'One account per line. Each line is sold as one unit, for example email:password.'},
@@ -146,10 +146,10 @@ async function start(){
   $('#app').style.display='none';$('#gate').style.display='block';
   if(e.code!==403)$('#gm').textContent=e.message,$('#gm').className='msg err';
   else if(pass){$('#gm').textContent='Wrong passcode.';$('#gm').className='msg err'}
-  try{sessionStorage.removeItem('rado_admin_pass')}catch(x){}
+  try{sessionStorage.removeItem('rado_admin_pass');sessionStorage.removeItem('rsh_admin_pass')}catch(x){}
  }
 }
-$('#unlock').onclick=()=>{pass=$('#pass').value.trim();if(!pass)return;try{sessionStorage.setItem('rado_admin_pass',pass)}catch(e){}start()};
+$('#unlock').onclick=()=>{pass=$('#pass').value.trim();if(!pass)return;try{sessionStorage.setItem('rado_admin_pass',pass);sessionStorage.setItem('rsh_admin_pass',pass)}catch(e){}start()};
 $('#pass').onkeydown=e=>{if(e.key==='Enter')$('#unlock').click()};
 if(pass)start();else{$('#gate').style.display='block'}
 })();

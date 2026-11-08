@@ -113,6 +113,43 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justif
 footer .brand{font-size:17px}footer .brand img{width:38px;height:38px}
 footer nav{display:flex;gap:22px}footer a:hover{color:#fff}
 
+
+.band{padding:70px 0;background:linear-gradient(180deg,#fff,#eef6fb)}
+.svc{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:0 auto 40px;max-width:860px}
+.svc span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-weight:700;font-size:15.5px;color:#334155;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+.svc span:last-child{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cards.two{grid-template-columns:1fr}
+@media (min-width:720px){.cards.two{grid-template-columns:repeat(2,1fr)}}
+.hd .btn,.hero .btn,.final .btn{font-family:inherit}
+/* sign in / sign up popup */
+.ov{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(8,12,20,.66);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow:auto}
+.ov.open{display:flex;animation:fade .18s ease-out}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.dlg{position:relative;width:100%;max-width:440px;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;background:#fff;color:var(--text);border-radius:22px;padding:26px 24px 22px;box-shadow:0 40px 90px rgba(0,0,0,.5);animation:pop .22s ease-out}
+@keyframes pop{from{transform:translateY(16px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.dlg .x{position:absolute;right:12px;top:10px;width:38px;height:38px;border:0;background:#f1f5f9;border-radius:50%;font-size:22px;line-height:1;color:#475569;cursor:pointer}
+.dlg .x:hover{background:#e2e8f0}
+.dlg .lg{display:flex;justify-content:center;margin:2px 0 6px}.dlg .lg img{width:84px;height:84px;object-fit:contain}
+.tabs{display:flex;background:#f1f5f9;border-radius:14px;padding:5px;margin:8px 0 18px}
+.tabs button{flex:1;border:0;background:transparent;padding:11px 8px;border-radius:10px;font-weight:700;font-size:16px;line-height:1;font-family:inherit;color:#64748b;cursor:pointer}
+.tabs button.on{background:#fff;color:#0f172a;box-shadow:0 2px 8px rgba(15,23,42,.12)}
+.dlg h3{margin:0 0 4px;font-size:22px;text-align:center}
+.dlg .hint{margin:0 0 14px;text-align:center;color:var(--muted);font-size:15px}
+.dlg label{display:block;font-size:14px;font-weight:700;color:#334155;margin:12px 0 6px}
+.dlg input,.dlg select{width:100%;border:1.5px solid #d1d5db;border-radius:12px;padding:13px 14px;font-size:16px;font-family:inherit;background:#fff;color:var(--text)}
+.dlg input:focus,.dlg select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgba(56,182,242,.18)}
+.pw{position:relative}.pw input{padding-right:62px}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--accent2);font-weight:700;font-size:14px;padding:8px 10px;cursor:pointer;font-family:inherit}
+.dlg .go{width:100%;margin-top:18px;padding:14px;font-size:17px}
+.dlg .btn.primary{color:#06222f}
+.dlg .row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:15px}
+.dlg .row a,.dlg .sw a{color:var(--accent2);font-weight:700}
+.dlg .sw{text-align:center;margin-top:16px;color:var(--muted);font-size:15px}
+.msg{padding:11px 13px;border-radius:12px;margin:0 0 6px;font-size:15px;display:none}
+.msg.err{display:block;background:#fee2e2;color:#991b1b}.msg.ok{display:block;background:#dcfce7;color:#166534}
+.two2{display:grid;gap:0 12px}@media(min-width:460px){.two2{grid-template-columns:1fr 1fr}}
+body.lock{overflow:hidden}
+
 /* reveal */
 .rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
 .rv.in{opacity:1;transform:none}
@@ -139,7 +176,7 @@ footer nav{display:flex;gap:22px}footer a:hover{color:#fff}
  <div class="wrap">
   <a class="brand" href="/"><img src="/rado/rado-logo.png" alt="Rado Social Hub"><span>Rado Social Hub<small>NUMBERS · ACCOUNTS</small></span></a>
   <nav class="nav"><a href="#features">What we offer</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav>
-  <div class="cta" id="hdcta"><a class="btn ghost" href="/login">Sign in</a><a class="btn primary" href="/register">Sign up</a></div>
+  <div class="cta" id="hdcta"><button class="btn ghost" data-auth="in" type="button">Sign in</button><button class="btn primary" data-auth="up" type="button">Sign up</button></div>
  </div>
 </header>
 
@@ -151,8 +188,8 @@ footer nav{display:flex;gap:22px}footer a:hover{color:#fff}
    <h1>Verification numbers &amp; ready-made accounts, <em>delivered in seconds.</em></h1>
    <p class="lead">Get an SMS number for any app in any country, or pick up a ready-made account, all from one wallet. If no code arrives, your money comes back automatically.</p>
    <div class="actions" id="heroact">
-    <a class="btn primary lg" href="/register">Create free account</a>
-    <a class="btn ghost lg" href="/login">Sign in</a>
+    <button class="btn primary lg" data-auth="up" type="button">Create free account</button>
+    <button class="btn ghost lg" data-auth="in" type="button">Sign in</button>
    </div>
    <div class="chips"><span><b>✓</b> No monthly fees</span><span><b>✓</b> Auto-refund on no code</span><span><b>✓</b> Pay with card, transfer or crypto</span></div>
   </div>
@@ -198,6 +235,17 @@ footer nav{display:flex;gap:22px}footer a:hover{color:#fff}
  </div>
 </section>
 
+
+<!-- ───────── SERVICES BAND ───────── -->
+<section class="sec band" id="services">
+ <div class="wrap">
+  <div class="rv" style="text-align:center"><span class="kicker">Works with the apps you use</span>
+  <h2 style="margin-bottom:8px">Numbers for almost any app.</h2>
+  <p class="sub" style="margin:0 auto 30px">WhatsApp, Telegram, Instagram, Facebook, TikTok, Google, X, Snapchat, Discord and hundreds more, in countries all over the world.</p></div>
+  <div class="svc rv"><span>WhatsApp</span><span>Telegram</span><span>Instagram</span><span>Facebook</span><span>TikTok</span><span>Google</span><span>X (Twitter)</span><span>Snapchat</span><span>Discord</span><span>Tinder</span><span>Uber</span><span>PayPal</span><span>+ 500 more</span></div>
+ </div>
+</section>
+
 <!-- ───────── SCREEN 3 ───────── -->
 <section class="sec light" id="how">
  <div class="wrap">
@@ -229,8 +277,8 @@ footer nav{display:flex;gap:22px}footer a:hover{color:#fff}
    <h2>Ready to get started?</h2>
    <p>Join Rado Social Hub today and get your first number or account in minutes.</p>
    <div class="actions" id="finalact">
-    <a class="btn primary lg" href="/register">Sign up free</a>
-    <a class="btn ghost lg" href="/login">Sign in</a>
+    <button class="btn primary lg" data-auth="up" type="button">Sign up free</button>
+    <button class="btn ghost lg" data-auth="in" type="button">Sign in</button>
    </div>
   </div>
  </div>
@@ -239,10 +287,66 @@ footer nav{display:flex;gap:22px}footer a:hover{color:#fff}
 <footer>
  <div class="wrap">
   <a class="brand" href="/"><img src="/rado/rado-logo.png" alt="Rado Social Hub"><span>Rado Social Hub</span></a>
-  <nav id="ftnav"><a href="/login">Sign in</a><a href="/register">Sign up</a></nav>
+  <nav id="ftnav"><a href="#" data-auth="in">Sign in</a><a href="#" data-auth="up">Sign up</a></nav>
   <div>© <span id="yr"></span> Rado Social Hub. All rights reserved.</div>
  </div>
 </footer>
+
+
+<!-- ───────── SIGN IN / SIGN UP POPUP ───────── -->
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="dttl">
+ <div class="dlg">
+  <button class="x" id="dx" type="button" aria-label="Close">×</button>
+  <div class="lg"><img src="/rado/rado-logo.png" alt="Rado Social Hub"></div>
+
+  <div id="pTabs" class="tabs"><button type="button" data-auth="in" id="tIn">Sign in</button><button type="button" data-auth="up" id="tUp">Sign up</button></div>
+
+  <!-- sign in -->
+  <form id="fIn" novalidate>
+   <h3 id="dttl">Welcome back</h3><p class="hint">Sign in to your account.</p>
+   <div class="msg" id="mIn"></div>
+   <label for="inEmail">Email</label><input id="inEmail" type="email" autocomplete="email" required>
+   <label for="inPw">Password</label><div class="pw"><input id="inPw" type="password" autocomplete="current-password" required><button type="button" data-show="inPw">Show</button></div>
+   <div class="row"><span></span><a href="#" id="lost">Lost password?</a></div>
+   <button class="btn primary go" id="goIn">Sign in</button>
+   <div class="sw">New here? <a href="#" data-auth="up">Create an account</a></div>
+  </form>
+
+  <!-- sign up -->
+  <form id="fUp" novalidate style="display:none">
+   <h3>Create your account</h3><p class="hint">It's free and takes under a minute.</p>
+   <div class="msg" id="mUp"></div>
+   <label for="upName">Your name</label><input id="upName" autocomplete="name" required>
+   <label for="upEmail">Email</label><input id="upEmail" type="email" autocomplete="email" required>
+   <div class="two2"><div><label for="upCountry">Country</label><select id="upCountry"><option value="">Select country</option></select></div>
+   <div><label for="upPhone">WhatsApp number</label><input id="upPhone" type="tel" autocomplete="tel" placeholder="08012345678" required></div></div>
+   <div class="two2"><div><label for="upPw">Password</label><div class="pw"><input id="upPw" type="password" autocomplete="new-password" minlength="8" required><button type="button" data-show="upPw">Show</button></div></div>
+   <div><label for="upPw2">Confirm password</label><input id="upPw2" type="password" autocomplete="new-password" minlength="8" required></div></div>
+   <button class="btn primary go" id="goUp">Create account</button>
+   <div class="sw">Already have an account? <a href="#" data-auth="in">Sign in</a></div>
+  </form>
+
+  <!-- forgot password: step 1 -->
+  <form id="fR1" novalidate style="display:none">
+   <h3>Forgot password</h3><p class="hint">Enter your email and we'll send you a 6-digit code.</p>
+   <div class="msg" id="mR1"></div>
+   <label for="rEmail">Email</label><input id="rEmail" type="email" autocomplete="email" required>
+   <button class="btn primary go" id="goR1">Send reset code</button>
+   <div class="sw"><a href="#" data-auth="in">Back to sign in</a></div>
+  </form>
+
+  <!-- forgot password: step 2 -->
+  <form id="fR2" novalidate style="display:none">
+   <h3>Reset password</h3><p class="hint" id="rInfo">Enter the code we emailed you.</p>
+   <div class="msg" id="mR2"></div>
+   <label for="rCode">6-digit code</label><input id="rCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+   <label for="rPw">New password</label><input id="rPw" type="password" autocomplete="new-password" minlength="8" required>
+   <label for="rPw2">Confirm new password</label><input id="rPw2" type="password" autocomplete="new-password" minlength="8" required>
+   <button class="btn primary go" id="goR2">Reset password</button>
+   <div class="sw"><a href="#" id="resend">Resend code</a> &nbsp;·&nbsp; <a href="#" data-auth="in">Back to sign in</a></div>
+  </form>
+ </div>
+</div>
 
 <script>
 (function(){
@@ -265,6 +369,107 @@ footer nav{display:flex;gap:22px}footer a:hover{color:#fff}
   // little live countdown in the phone mock
   var s=19*60+42,m=document.getElementById('mcd');
   setInterval(function(){s=s<=1?19*60+59:s-1;m.textContent=('0'+Math.floor(s/60)).slice(-2)+':'+('0'+s%60).slice(-2)},1000);
+})();
+
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var ov=$('ov'),forms=['fIn','fUp','fR1','fR2'],resetEmail='',lastFocus=null,countriesLoaded=false;
+  function setMsg(id,t,c){var e=$(id);e.textContent=t||'';e.className='msg'+(t?' '+c:'')}
+  function view(name){
+    forms.forEach(function(f){$(f).style.display=(f===name)?'':'none'});
+    $('pTabs').style.display=(name==='fIn'||name==='fUp')?'':'none';
+    $('tIn').classList.toggle('on',name==='fIn');$('tUp').classList.toggle('on',name==='fUp');
+    ['mIn','mUp','mR1','mR2'].forEach(function(m){setMsg(m,'')});
+    if(name==='fUp')loadCountries();
+    var first=$(name).querySelector('input,select');if(first)setTimeout(function(){try{first.focus()}catch(e){}},60);
+  }
+  function openAuth(which){
+    lastFocus=document.activeElement;
+    ov.classList.add('open');document.body.classList.add('lock');
+    view(which==='up'?'fUp':'fIn');
+    try{history.replaceState(null,'',which==='up'?'#signup':'#signin')}catch(e){}
+  }
+  function closeAuth(){
+    ov.classList.remove('open');document.body.classList.remove('lock');
+    try{if(/^#sign/.test(location.hash))history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+    if(lastFocus&&lastFocus.focus)try{lastFocus.focus()}catch(e){}
+  }
+  // every element with data-auth opens / switches the popup (no page change)
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('[data-auth]');
+    if(t){e.preventDefault();var w=t.getAttribute('data-auth');if(ov.classList.contains('open'))view(w==='up'?'fUp':'fIn');else openAuth(w);return}
+    var sh=e.target.closest&&e.target.closest('[data-show]');
+    if(sh){var i=$(sh.getAttribute('data-show'));var show=i.type==='password';i.type=show?'text':'password';sh.textContent=show?'Hide':'Show'}
+  });
+  $('dx').onclick=closeAuth;
+  ov.addEventListener('mousedown',function(e){if(e.target===ov)closeAuth()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('open'))closeAuth()});
+  $('lost').onclick=function(e){e.preventDefault();$('rEmail').value=$('inEmail').value.trim();view('fR1')};
+
+  function post(url,body){
+    return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){
+      return r.json().catch(function(){return {}}).then(function(d){
+        if(!r.ok){var er=new Error(d.error||d.message||'Something went wrong. Please try again.');throw er}
+        return d})})
+  }
+  function saveSession(d){try{localStorage.setItem('rsh_token',d.token);localStorage.setItem('token',d.token);if(d.user)localStorage.setItem('rsh_user',JSON.stringify(d.user))}catch(e){}}
+  function busy(b,on,txt){b.disabled=on;if(txt!==undefined){if(on){b.dataset.t=b.textContent;b.textContent=txt}else if(b.dataset.t){b.textContent=b.dataset.t}}}
+
+  // sign in
+  $('fIn').onsubmit=function(e){e.preventDefault();var b=$('goIn');
+    var em=$('inEmail').value.trim(),pw=$('inPw').value;
+    if(!em||!pw){setMsg('mIn','Enter your email and password.','err');return}
+    setMsg('mIn','');busy(b,true,'Signing in…');
+    post('/api/auth/login',{email:em,password:pw}).then(function(d){saveSession(d);location.replace('/dashboard')})
+    .catch(function(er){setMsg('mIn',er.message,'err');busy(b,false,1)})};
+
+  // sign up
+  function loadCountries(){
+    if(countriesLoaded)return;countriesLoaded=true;var sel=$('upCountry');
+    var fallback='<option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option><option value="US">United States</option><option value="GB">United Kingdom</option>';
+    function esc(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+    fetch('/api/countries').then(function(r){return r.json()}).then(function(l){
+      var list=Array.isArray(l)?l:(l.countries||[]);
+      if(!list.length)throw 0;
+      sel.innerHTML='<option value="">Select country</option>'+list.map(function(c){return '<option value="'+esc(c.code||c.iso)+'">'+esc(c.name)+'</option>'}).join('');
+    }).catch(function(){sel.innerHTML='<option value="">Select country</option>'+fallback});
+  }
+  $('fUp').onsubmit=function(e){e.preventDefault();var b=$('goUp');
+    var name=$('upName').value.trim(),em=$('upEmail').value.trim(),c=$('upCountry').value,ph=$('upPhone').value.trim(),pw=$('upPw').value;
+    if(!name||!em||!ph||!pw){setMsg('mUp','Please complete every field.','err');return}
+    if(!c){setMsg('mUp','Please select your country.','err');return}
+    if(pw.length<8){setMsg('mUp','Password must be at least 8 characters.','err');return}
+    if(pw!==$('upPw2').value){setMsg('mUp','The two passwords do not match.','err');return}
+    var ref='';try{ref=new URLSearchParams(location.search).get('ref')||''}catch(x){}
+    setMsg('mUp','');busy(b,true,'Creating account…');
+    post('/api/auth/register',{name:name,email:em,country:c,phoneCountry:c,phone:ph,password:pw,refCode:ref}).then(function(d){saveSession(d);location.replace('/dashboard')})
+    .catch(function(er){setMsg('mUp',er.message,'err');busy(b,false,1)})};
+
+  // forgot password
+  function sendCode(email,msgId,btn){
+    busy(btn,true,'Sending…');
+    return post('/api/auth/forgot-password',{email:email}).then(function(d){
+      resetEmail=email;$('rInfo').textContent=((d.message||'A reset code was sent.')+' '+(d.spamNote||'')).trim();
+      view('fR2');setMsg('mR2','Code sent. Check your inbox and spam folder.','ok')})
+    .catch(function(er){setMsg(msgId,er.message,'err')}).then(function(){busy(btn,false,1)})}
+  $('fR1').onsubmit=function(e){e.preventDefault();var em=$('rEmail').value.trim().toLowerCase();if(!em){setMsg('mR1','Enter your email.','err');return}sendCode(em,'mR1',$('goR1'))};
+  $('resend').onclick=function(e){e.preventDefault();if(resetEmail)sendCode(resetEmail,'mR2',$('goR2'))};
+  $('fR2').onsubmit=function(e){e.preventDefault();var b=$('goR2');
+    if($('rPw').value!==$('rPw2').value){setMsg('mR2','The two passwords do not match.','err');return}
+    if($('rPw').value.length<8){setMsg('mR2','Password must be at least 8 characters.','err');return}
+    busy(b,true,'Saving…');
+    post('/api/auth/reset-password-with-code',{email:resetEmail,code:$('rCode').value.trim(),newPassword:$('rPw').value}).then(function(d){
+      view('fIn');$('inEmail').value=resetEmail;$('inPw').value='';setMsg('mIn',d.message||'Password updated. You can now sign in.','ok')})
+    .catch(function(er){setMsg('mR2',er.message,'err')}).then(function(){busy(b,false,1)})};
+
+  // open from a link like  /#signin  /#signup  or a referral link  /?ref=CODE
+  function fromUrl(){
+    var h=location.hash,ref='';try{ref=new URLSearchParams(location.search).get('ref')||''}catch(x){}
+    var signedIn='';try{signedIn=localStorage.getItem('rsh_token')||localStorage.getItem('token')||''}catch(x){}
+    if(signedIn)return;
+    if(h==='#signup'||ref)openAuth('up');else if(h==='#signin'||h==='#login')openAuth('in');
+  }
+  fromUrl();
 })();
 </script>
 </body>

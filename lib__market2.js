@@ -34,8 +34,9 @@ const axios = require('axios');
 const crypto = require('crypto');
 const { sealRef, openRef } = require('./opaque-ref');
 
-let resolveLogPicture = () => '';
-try { resolveLogPicture = require('./market2').resolveLogPicture || resolveLogPicture; } catch (e) { /* optional */ }
+// Picture for a product: the picture the admin set wins, then the supplier's own picture.
+// (Name-based logos from the admin panel are applied on top of this in /api/market2/products.)
+const resolveLogPicture = (category, name, apiPic, customPic) => String(customPic || apiPic || '').trim();
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 async function withRetry(fn, tries = 3, delayMs = 250) {
@@ -49,6 +50,8 @@ async function withRetry(fn, tries = 3, delayMs = 250) {
 function register(app, deps) {
   const { mongoose, User, Transaction, auth, anyAdminAuth, sendAdminEmail } = deps;
   const brandLogoFor = deps.brandLogoFor || (async () => '');
+  // Hooks filled in later by lib/rado-logs.js (the logs the admin adds by hand).
+  const hooks = deps.hooks || {};
 
   let runtimeApiKey = '';
   let runtimeBaseUrl = '';
@@ -339,18 +342,27 @@ function register(app, deps) {
     try {
       const c = await getCfg();
       if (!c.market2Enabled) return res.status(503).json({ error: c.maintenanceMessage, maintenance: true });
-      const products = (await mergedProducts(false))
-        .filter(p => p.priced && p.enabled)
-      const list = await Promise.all(products.map(async (p, index) => {
-        const title = p.customTitle || p.name;
-        const brandLogo = await brandLogoFor(title, p.category);
-        return {
-          id: index, productKey: sealRef('market2:product', { id: Number(p.id) }, process.env.JWT_SECRET),
-          title, description: p.description, picture: brandLogo || p.picture,
-          category: p.category, price: p.sellPrice, stock: p.stock, inStock: p.inStock
-        };
-      }));
-      res.json(list);
+      let list = [];
+      let providerError = null;
+      try {
+        const products = (await mergedProducts(false)).filter(p => p.priced && p.enabled);
+        list = await Promise.all(products.map(async (p, index) => {
+          const title = p.customTitle || p.name;
+          let brandLogo = '';
+          try { brandLogo = await brandLogoFor(title, p.category); } catch (e) { /* a logo problem must never hide a product */ }
+          return {
+            id: index, productKey: sealRef('market2:product', { id: Number(p.id) }, process.env.JWT_SECRET),
+            title, description: p.description, picture: brandLogo || p.picture,
+            category: p.category, price: p.sellPrice, stock: p.stock, inStock: p.inStock
+          };
+        }));
+      } catch (e) { providerError = e; }
+      // Logs the admin added by hand show up as ordinary products next to the provider's.
+      let own = [];
+      try { if (hooks.ownProducts) own = await hooks.ownProducts(); } catch (e) { console.error('[Market2] own logs failed:', e.message); }
+      own.forEach((o, i) => { o.id = list.length + i; });
+      if (providerError && !own.length) throw providerError;
+      res.json(list.concat(own));
     } catch (e) { res.status(e.status === 503 ? 503 : 502).json({ error: 'Could not load Marketplace 2 right now. Please try again.' }); }
   });
 
@@ -370,6 +382,12 @@ function register(app, deps) {
     try {
       const c = await getCfg();
       if (!c.market2Enabled) return res.status(503).json({ error: c.maintenanceMessage, maintenance: true });
+      // A log the admin added by hand (not from the provider)? Hand it to lib/rado-logs.js.
+      if (hooks.ownBuy) {
+        let ownId = '';
+        try { ownId = String(openRef('market2:rlog', String(req.body?.productId || ''), process.env.JWT_SECRET).id || ''); } catch (_) {}
+        if (ownId) return await hooks.ownBuy(req, res, ownId);
+      }
       let productId = 0;
       try { productId = Number(openRef('market2:product', String(req.body?.productId || ''), process.env.JWT_SECRET).id); } catch (_) {}
       const quantity = Math.max(1, Math.min(100, parseInt(req.body?.quantity, 10) || 1));
@@ -621,6 +639,17 @@ function register(app, deps) {
   app.post('/api/admin/market2/orders/:id/resync', anyAdminAuth, async (req, res) => {
     try { res.json({ ok: await deliverToUser(req.params.id) }); } catch (e) { res.status(500).json({ error: e.message }); }
   });
+
+  // What lib/rado-logs.js needs to sell hand-added logs through the same order/refund/delivery machinery.
+  return {
+    Market2Order, deliverToUser, refundOrder, getCfg, alertAdmin, withRetry, customerView,
+    async providerCategories() {
+      try {
+        if (!cache.categories.length) await Promise.race([loadCatalogue(false), new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), 8000))]);
+      } catch (e) { /* provider offline: only own categories are offered */ }
+      return [...new Set((cache.categories || []).map(c => c.name).filter(Boolean))];
+    }
+  };
 }
 
 module.exports = { register };

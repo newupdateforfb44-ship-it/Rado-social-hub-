@@ -32,8 +32,23 @@ function register(app, deps) {
   const { mongoose, User, Transaction, auth, anyAdminAuth } = deps;
   const adminAuth = deps.adminAuth || anyAdminAuth; // owner-only for anything that changes prices
   // Marketplace = RakibSocials (same Marketplace 2 as the Marvel Nums site). Needs RAKIB_API_KEY on Render.
+  // LOGOS: every product (provider products AND logs the admin adds by hand) gets its logo from
+  //   1) the old brand-logo table (only when USE_LEGACY_BRAND_LOGOS=true), then
+  //   2) Admin -> Services & Prices -> "Product logos (by name)"  (stored in the database, always on).
+  // marketLogo() is used lazily (when a customer opens Products), by which time loadLogos/logoFor below exist.
+  const marketLogo = async (title, category) => {
+    let u = '';
+    if (typeof deps.brandLogoFor === 'function') { try { u = await deps.brandLogoFor(title, category); } catch (e) { u = ''; } }
+    if (u) return u;
+    await loadLogos();
+    return logoFor(title, category);
+  };
+  const marketHooks = {};
   try {
-    require('./market2').register(app, { mongoose, User, Transaction, auth, anyAdminAuth, sendAdminEmail: deps.sendAdminEmail || (async () => ({ sent: false })), brandLogoFor: deps.brandLogoFor });
+    const market = require('./market2').register(app, { mongoose, User, Transaction, auth, anyAdminAuth, sendAdminEmail: deps.sendAdminEmail || (async () => ({ sent: false })), brandLogoFor: marketLogo, hooks: marketHooks });
+    // Logs the admin adds by hand (Admin -> Add logs) are sold through the same marketplace.
+    try { require('./rado-logs').register(app, { mongoose, User, Transaction, auth, anyAdminAuth, adminAuth, market, hooks: marketHooks, logoFor: marketLogo }); }
+    catch (e) { console.error('[rado-logs] could not start:', e.message); }
   } catch (e) { console.error('[market2] could not start:', e.message); }
 
   const apiKey = () => String(process.env.BENOTP_API_KEY || '').trim();
