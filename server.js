@@ -68,7 +68,7 @@ app.get('/healthz/db', async (req, res) => {
   });
 });
 // ── Rado Social Hub front end (only these pages exist) ─────────────────────
-const RADO_PAGES = { '/': 'login', '/login': 'login', '/signin': 'login', '/register': 'register', '/signup': 'register',
+const RADO_PAGES = { '/': 'home', '/admin-logs': 'admin-logs', '/login': 'login', '/signin': 'login', '/register': 'register', '/signup': 'register',
   '/dashboard': 'dashboard', '/products': 'products', '/sms': 'sms', '/deposit': 'deposit', '/fund-crypto': 'fund-crypto',
   '/transactions': 'transactions', '/orders': 'orders', '/profile': 'profile', '/api-access': 'api-access' };
 Object.keys(RADO_PAGES).forEach(route => app.get(route, (req, res) => {
@@ -1063,7 +1063,7 @@ const { brandLogoFor } = require('./lib/brand-logos').register({
  app, mongoose, adminAuth, cloudinary, cloudinaryConfigured
 });
 // Provider integration for SMS Numbers + Products (BENOTP_API_KEY) - see lib/benotp.js
-require('./lib/benotp').register(app, { mongoose, User, Transaction, auth, anyAdminAuth, adminAuth });
+require('./lib/benotp').register(app, { mongoose, User, Transaction, auth, anyAdminAuth, adminAuth, sendAdminEmail, brandLogoFor });
 
 // Owner-only integration diagnostics. This reports readiness without ever
 // returning provider credentials, so the admin can distinguish a disabled
