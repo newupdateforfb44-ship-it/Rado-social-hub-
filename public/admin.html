@@ -869,95 +869,27 @@ tr:hover td{background:rgba(255,255,255,.035)}
       </div>
       <div class="sec">
  <div class="sec-title"><svg class="icon i-phone" aria-hidden="true"><use href="#i-phone"/></svg> Contact &amp; Links Settings</div>
- <div class="info-box"><svg class="icon i-pin" aria-hidden="true"><use href="#i-pin"/></svg> These settings are used everywhere across the site — the floating community button, Support page, footer, and buy prompts. Changes take effect immediately across all pages. Fields can be saved individually — you don't need to fill all three at once.</div>
+ <div class="info-box"><svg class="icon i-pin" aria-hidden="true"><use href="#i-pin"/></svg> These two contacts power the floating WhatsApp and Telegram icons and every "Contact admin" link on the site. Changes go live immediately.</div>
         <div style="background:var(--card2,#ffffff);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
- <div style="font-weight:700;font-size:.95rem;margin-bottom:4px;color:var(--accent)"><svg class="icon i-phone" aria-hidden="true"><use href="#i-phone"/></svg> Admin WhatsApp Number</div>
-          <div style="font-size:.82rem;color:var(--t2);margin-bottom:12px">This is the number users contact for support. Used in all WhatsApp chat links (wa.me/...). Enter digits only — no +, spaces, or dashes.</div>
           <div class="form-row" style="margin-bottom:10px">
             <div class="fg">
-              <label>WhatsApp Contact Number <span style="color:var(--red)">*</span></label>
-              <input type="text" id="slNumber" placeholder="e.g. 2348012345678" maxlength="15"
-                style="font-size:1.05rem;letter-spacing:1px"
+              <label>Admin WhatsApp number <span style="color:var(--red)">*</span></label>
+              <input type="text" id="slNumber" inputmode="numeric" placeholder="e.g. 2348012345678" maxlength="15"
                 oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+              <div style="font-size:.78rem;color:var(--t2);margin-top:4px">Digits only, with country code. No +, spaces or dashes.</div>
             </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
- <button class="btn-primary" onclick="saveSiteLinksField('number')" style="min-width:160px"><svg class="icon i-save" aria-hidden="true"><use href="#i-save"/></svg> Save Number</button>
-            <span id="slNumberPreview" style="font-size:.82rem;color:var(--t2)"></span>
-          </div>
-          <div id="slNumberFb" class="fb" style="margin-top:8px"></div>
-        </div>
-        <div style="background:var(--card2,#ffffff);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
- <div style="font-weight:700;font-size:.95rem;margin-bottom:4px;color:var(--accent)"><svg class="icon i-smartphone" aria-hidden="true"><use href="#i-smartphone"/></svg> Admin Contact Phone (Support Page)</div>
-          <div style="font-size:.82rem;color:var(--t2);margin-bottom:12px">Separate from the WhatsApp community number above. This is the direct admin contact shown on the Support &amp; Contact page. Digits only — no +, spaces, or dashes. <b>Cannot be removed, only changed.</b></div>
-          <div class="form-row" style="margin-bottom:10px">
             <div class="fg">
-              <label>Admin Contact Number <span style="color:var(--red)">*</span></label>
-              <input type="text" id="slAdminPhone" placeholder="e.g. 2348012345678" maxlength="15"
-                style="font-size:1.05rem;letter-spacing:1px"
-                oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+              <label>Admin Telegram username <span style="color:var(--red)">*</span></label>
+              <input type="text" id="slTelegramUser" placeholder="e.g. your_username" maxlength="33" autocapitalize="none" autocomplete="off"/>
+              <div style="font-size:.78rem;color:var(--t2);margin-top:4px">Username only (with or without @). No link needed.</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
- <button class="btn-primary" onclick="saveSiteLinksField('adminphone')" style="min-width:180px"><svg class="icon i-save" aria-hidden="true"><use href="#i-save"/></svg> Save Admin Phone</button>
-            <span id="slAdminPhonePreview" style="font-size:.82rem;color:var(--t2)"></span>
-          </div>
-          <div id="slAdminPhoneFb" class="fb" style="margin-top:8px"></div>
-        </div>
-        <div style="background:var(--card2,#ffffff);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
- <div style="font-weight:700;font-size:.95rem;margin-bottom:4px;color:var(--accent)"><svg class="icon i-users" aria-hidden="true"><use href="#i-users"/></svg> WhatsApp Community / Group Link</div>
-          <div style="font-size:.82rem;color:var(--t2);margin-bottom:12px">The group link shown on the Community button and Support page. Must start with https://chat.whatsapp.com/</div>
-          <div class="form-row" style="margin-bottom:10px">
-            <div class="fg">
-              <label>Community Group Link <span style="color:var(--red)">*</span></label>
-              <input type="url" id="slGroupLink" placeholder="https://chat.whatsapp.com/XXXXXXX"/>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
- <button class="btn-primary" onclick="saveSiteLinksField('group')" style="min-width:160px"><svg class="icon i-save" aria-hidden="true"><use href="#i-save"/></svg> Save Group Link</button>
- <a id="slGroupPreviewBtn" href="#" target="_blank" style="font-size:.82rem;color:var(--accent);display:none"><svg class="icon i-link" aria-hidden="true"><use href="#i-link"/></svg> Test Link</a>
-          </div>
-          <div id="slGroupFb" class="fb" style="margin-top:8px"></div>
-        </div>
-        <div style="background:var(--card2,#ffffff);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
-          <div style="font-weight:700;font-size:.95rem;margin-bottom:4px;color:var(--accent)"><svg class="icon i-megaphone" aria-hidden="true"><use href="#i-megaphone"/></svg> WhatsApp Channel Link</div>
-          <div style="font-size:.82rem;color:var(--t2);margin-bottom:12px">The broadcast channel link used in the channel follow button and footer. Must start with https://whatsapp.com/channel/</div>
-          <div class="form-row" style="margin-bottom:10px">
-            <div class="fg">
-              <label>Channel Link <span style="color:var(--red)">*</span></label>
-              <input type="url" id="slChannelLink" placeholder="https://whatsapp.com/channel/XXXXXXX"/>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
- <button class="btn-primary" onclick="saveSiteLinksField('channel')" style="min-width:160px"><svg class="icon i-save" aria-hidden="true"><use href="#i-save"/></svg> Save Channel Link</button>
- <a id="slChannelPreviewBtn" href="#" target="_blank" style="font-size:.82rem;color:var(--accent);display:none"><svg class="icon i-link" aria-hidden="true"><use href="#i-link"/></svg> Test Link</a>
-          </div>
-          <div id="slChannelFb" class="fb" style="margin-top:8px"></div>
-        </div>
-        <div style="background:var(--card2,#ffffff);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
-          <div style="font-weight:700;font-size:.95rem;margin-bottom:4px;color:var(--accent)"><svg class="icon i-message-circle" aria-hidden="true"><use href="#i-message-circle"/></svg> Telegram &amp; WhatsApp contact (support dock)</div>
-          <div style="font-size:.82rem;color:var(--t2);margin-bottom:12px">These power the floating Telegram + WhatsApp buttons shown on every page and every “Contact admin” link. Change them any time — no redeploy needed.</div>
-          <div class="form-row" style="margin-bottom:10px">
-            <div class="fg"><label>Telegram username</label><input type="text" id="slTelegramUser" placeholder="your Telegram username" oninput="rshSyncTelegramLink()"/></div>
-            <div class="fg"><label>Telegram link (auto-filled — edit only for a custom link)</label><input type="url" id="slTelegramLink" placeholder="#" oninput="rshTelegramLinkDirty=true"/></div>
-          </div>
-          <div class="form-row" style="margin-bottom:10px">
-            <div class="fg"><label>Telegram Join Channel link</label><input type="url" id="slTelegramChannelLink" placeholder="https://t.me/your_channel"/></div>
-            <div class="fg"><label>Telegram Join Community link</label><input type="url" id="slTelegramCommunityLink" placeholder="https://t.me/your_community"/></div>
-          </div>
-          <div class="form-row" style="margin-bottom:10px">
-            <div class="fg"><label>WhatsApp chat link (leave blank to use the number above)</label><input type="url" id="slWaChatLink" placeholder="#"/></div>
-            <div class="fg"><label>Support hours (shown to buyers)</label><input type="text" id="slSupportHours" placeholder="9:00 AM – 11:00 PM (WAT), every day"/></div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <button class="btn-primary" onclick="saveContactLinks()" style="min-width:160px"><svg class="icon i-save" aria-hidden="true"><use href="#i-save"/></svg> Save Contact Links</button>
-            <a id="slTgPreviewBtn" href="#" target="_blank" style="font-size:.82rem;color:var(--accent)"><svg class="icon i-link" aria-hidden="true"><use href="#i-link"/></svg> Test Telegram</a>
+            <button class="btn-primary" onclick="saveAdminContacts()" style="min-width:160px"><svg class="icon i-save" aria-hidden="true"><use href="#i-save"/></svg> Save</button>
+            <a id="slWaTest" href="#" target="_blank" rel="noopener" style="font-size:.82rem;color:var(--accent);display:none">Test WhatsApp</a>
+            <a id="slTgPreviewBtn" href="#" target="_blank" rel="noopener" style="font-size:.82rem;color:var(--accent);display:none">Test Telegram</a>
           </div>
           <div id="slContactFb" class="fb" style="margin-top:8px"></div>
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
-          <div id="slFeedback" class="fb" style="margin-bottom:8px"></div>
- <button class="btn-gold" onclick="saveSiteLinks()" style="width:100%;font-size:1rem"><svg class="icon i-save" aria-hidden="true"><use href="#i-save"/></svg> Save All Three at Once</button>
         </div>
       </div>
     </div>
@@ -1609,26 +1541,12 @@ async function loadSiteLinksAdmin() {
       logoPreview.src = links.logoUrl || '';
       logoPreview.style.display = links.logoUrl ? 'block' : 'none';
     }
-    const num = links.whatsappNumber || '';
-    const grp = links.whatsappGroupLink || '';
-    const chn = links.whatsappChannelLink || '';
-    document.getElementById('slNumber').value = num;
-    document.getElementById('slGroupLink').value = grp;
-    document.getElementById('slChannelLink').value = chn;
-    // Admin Phone
-    const adminPhone = links.adminPhone || num;
-    const adminPhoneEl = document.getElementById('slAdminPhone');
-    if (adminPhoneEl) adminPhoneEl.value = adminPhone;
-    const prevAdminPhone = document.getElementById('slAdminPhonePreview');
- if (prevAdminPhone && adminPhone) prevAdminPhone.textContent = ` wa.me/${adminPhone}`;
-    // Live previews
-    const prevNum = document.getElementById('slNumberPreview');
- if (prevNum && num) prevNum.textContent = ` wa.me/${num}`;
-    const prevGrp = document.getElementById('slGroupPreviewBtn');
-    if (prevGrp && grp) { prevGrp.href = grp; prevGrp.style.display = 'inline'; }
-    const prevChn = document.getElementById('slChannelPreviewBtn');
-    if (prevChn && chn) { prevChn.href = chn; prevChn.style.display = 'inline'; }
-  } catch (e) { setFb(document.getElementById('slFeedback'), e.message, 'err'); }
+    const num = links.adminPhone || links.whatsappNumber || '';
+    const numEl = document.getElementById('slNumber');
+    if (numEl) numEl.value = num;
+    const waT = document.getElementById('slWaTest');
+    if (waT && num) { waT.href = 'https://wa.me/' + num; waT.style.display = 'inline'; }
+  } catch (e) { setFb(document.getElementById('slContactFb'), e.message, 'err'); }
   loadBrandLogoMappings();
 }
 let brandLogoEditingKey = '';
@@ -1770,122 +1688,34 @@ async function removeSiteLogo() {
     await loadSiteLinksAdmin();
   } catch (e) { feedback.textContent = 'Could not remove the site logo: ' + e.message; }
 }
-// Save a single field without requiring all three to be filled
-async function saveSiteLinksField(field) {
-  const fbIds = { number: 'slNumberFb', group: 'slGroupFb', channel: 'slChannelFb', adminphone: 'slAdminPhoneFb' };
-  const fb = document.getElementById(fbIds[field]);
-  try {
-    let payload = {};
-    if (field === 'number') {
-      const val = document.getElementById('slNumber').value.replace(/[^0-9]/g, '');
- if (!val || val.length < 10) return setFb(fb, ' Enter a valid number (digits only, min 10 digits)', 'err');
-      payload.whatsappNumber = val;
-      // Update live preview
-      const prev = document.getElementById('slNumberPreview');
- if (prev) prev.textContent = ` wa.me/${val}`;
-    } else if (field === 'group') {
-      const val = document.getElementById('slGroupLink').value.trim();
- if (!val || !val.startsWith('https://')) return setFb(fb, ' Must be a valid https:// URL', 'err');
-      payload.whatsappGroupLink = val;
-      const btn = document.getElementById('slGroupPreviewBtn');
-      if (btn) { btn.href = val; btn.style.display = 'inline'; }
-    } else if (field === 'channel') {
-      const val = document.getElementById('slChannelLink').value.trim();
- if (!val || !val.startsWith('https://')) return setFb(fb, ' Must be a valid https:// URL', 'err');
-      payload.whatsappChannelLink = val;
-      const btn = document.getElementById('slChannelPreviewBtn');
-      if (btn) { btn.href = val; btn.style.display = 'inline'; }
-    } else if (field === 'adminphone') {
-      const val = document.getElementById('slAdminPhone').value.replace(/[^0-9]/g, '');
- if (!val || val.length < 10) return setFb(fb, ' Enter a valid number (digits only, min 10 digits)', 'err');
-      payload.adminPhone = val;
-      const prev = document.getElementById('slAdminPhonePreview');
- if (prev) prev.textContent = ` wa.me/${val}`;
-    }
-    // First load current values so we don't wipe the others
-    const current = await aFetch('/api/admin/site-links');
-    const merged = {
-      whatsappNumber:      current.whatsappNumber      || '',
-      adminPhone:          current.adminPhone          || current.whatsappNumber || '',
-      whatsappGroupLink:   current.whatsappGroupLink   || '',
-      whatsappChannelLink: current.whatsappChannelLink || '',
-      ...payload
-    };
-    await aFetch('/api/admin/site-links', 'POST', merged);
- setFb(fb, ' Saved — live across the site immediately', 'ok');
-    setTimeout(() => setFb(fb, '', ''), 4000);
- } catch (e) { setFb(fb, ' ' + e.message, 'err'); }
-}
-// Telegram/WhatsApp contact links used by the site-wide floating support dock.
-// rshTelegramLinkDirty tracks whether the admin has hand-edited the link field
-// directly (for a custom, non-t.me link) — while it's false, the link field is
-// kept in sync with whatever they type into the username field, so a save
-// never resubmits a stale link alongside a fresh username (see server.js
-// POST /api/admin/site-links for the matching backend note on this bug).
-let rshTelegramLinkDirty = false;
-function rshSyncTelegramLink() {
-  if (rshTelegramLinkDirty) return;
-  const u = document.getElementById('slTelegramUser').value.trim().replace(/^@/, '');
-  const linkEl = document.getElementById('slTelegramLink');
-  if (linkEl) linkEl.value = u ? 'https://t.me/' + u : '';
-}
+// Admin WhatsApp number + Telegram username (drive the floating icons and all "Contact admin" links)
 async function loadContactLinksAdmin() {
   try {
     const links = await aFetch('/api/admin/site-links');
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
-    set('slTelegramUser', links.telegramUsername || '');
-    set('slTelegramLink', links.telegramLink || '#');
-    set('slTelegramChannelLink', links.telegramChannelLink || '');
-    set('slTelegramCommunityLink', links.telegramCommunityLink || '');
-    rshTelegramLinkDirty = false; // freshly loaded from the server — back in sync
-    set('slWaChatLink', links.whatsappChatLink || '');
-    set('slSupportHours', links.supportHours || '');
-    const prev = document.getElementById('slTgPreviewBtn');
-    if (prev) prev.href = links.telegramLink || ('https://t.me/' + (links.telegramUsername || ''));
+    const u = String(links.telegramUsername || '').replace(/^@/, '');
+    const el = document.getElementById('slTelegramUser'); if (el) el.value = u;
+    const tg = document.getElementById('slTgPreviewBtn');
+    if (tg && u) { tg.href = 'https://t.me/' + u; tg.style.display = 'inline'; }
   } catch (e) {}
 }
-async function saveContactLinks() {
+async function saveAdminContacts() {
   const fb = document.getElementById('slContactFb');
-  const telegramUsername = document.getElementById('slTelegramUser').value.trim().replace(/^@/, '');
-  let telegramLink = document.getElementById('slTelegramLink').value.trim();
-  const whatsappChatLink = document.getElementById('slWaChatLink').value.trim();
-  const supportHours = document.getElementById('slSupportHours').value.trim();
-  const telegramChannelLink = document.getElementById('slTelegramChannelLink').value.trim();
-  const telegramCommunityLink = document.getElementById('slTelegramCommunityLink').value.trim();
-  for (const [label, link] of [['Telegram channel', telegramChannelLink], ['Telegram community', telegramCommunityLink]]) if (link && !link.startsWith('https://')) return setFb(fb, label + ' link must start with https://', 'err');
-  if (!telegramUsername && !telegramLink) return setFb(fb, 'Enter a Telegram username or link', 'err');
-  if (telegramUsername && !telegramLink) telegramLink = 'https://t.me/' + telegramUsername;
+  const num = document.getElementById('slNumber').value.replace(/[^0-9]/g, '');
+  const user = document.getElementById('slTelegramUser').value.trim().replace(/^@/, '').replace(/^https?:\/\/t\.me\//i, '');
+  if (num && num.length < 10) return setFb(fb, 'WhatsApp number must be at least 10 digits', 'err');
+  if (user && !/^[A-Za-z0-9_]{4,32}$/.test(user)) return setFb(fb, 'Telegram username must be 4-32 letters, numbers or underscores', 'err');
+  if (!num && !user) return setFb(fb, 'Enter a WhatsApp number or a Telegram username', 'err');
+  // Send only these fields so nothing else is touched (no stale link can trigger an https error)
+  const payload = {};
+  if (num) { payload.whatsappNumber = num; payload.adminPhone = num; payload.whatsappChatLink = 'https://wa.me/' + num; }
+  if (user) payload.telegramUsername = user;
   try {
-    await aFetch('/api/admin/site-links', 'POST', { telegramUsername, telegramLink, telegramChannelLink, telegramCommunityLink, whatsappChatLink, supportHours });
-    rshTelegramLinkDirty = false;
+    await aFetch('/api/admin/site-links', 'POST', payload);
     setFb(fb, 'Saved — live across the site immediately', 'ok');
-    const prev = document.getElementById('slTgPreviewBtn'); if (prev) prev.href = telegramLink;
+    const waT = document.getElementById('slWaTest'); if (waT && num) { waT.href = 'https://wa.me/' + num; waT.style.display = 'inline'; }
+    const tg = document.getElementById('slTgPreviewBtn'); if (tg && user) { tg.href = 'https://t.me/' + user; tg.style.display = 'inline'; }
     setTimeout(() => setFb(fb, '', ''), 5000);
   } catch (e) { setFb(fb, e.message, 'err'); }
-}
-async function saveSiteLinks() {
-  const fb = document.getElementById('slFeedback');
-  const whatsappNumber      = document.getElementById('slNumber').value.replace(/[^0-9]/g, '');
-  const whatsappGroupLink   = document.getElementById('slGroupLink').value.trim();
-  const whatsappChannelLink = document.getElementById('slChannelLink').value.trim();
-  if (!whatsappNumber || !whatsappGroupLink || !whatsappChannelLink)
- return setFb(fb, ' All three fields are required to save all at once', 'err');
-  if (whatsappNumber.length < 10)
- return setFb(fb, ' WhatsApp number must be at least 10 digits', 'err');
-  if (!whatsappGroupLink.startsWith('https://') || !whatsappChannelLink.startsWith('https://'))
- return setFb(fb, ' Links must start with https://', 'err');
-  try {
-    await aFetch('/api/admin/site-links', 'POST', { whatsappNumber, whatsappGroupLink, whatsappChannelLink });
- setFb(fb, ' All three saved — live across the site immediately', 'ok');
-    // Update previews
-    const pNum = document.getElementById('slNumberPreview');
- if (pNum) pNum.textContent = ` wa.me/${whatsappNumber}`;
-    const pGrp = document.getElementById('slGroupPreviewBtn');
-    if (pGrp) { pGrp.href = whatsappGroupLink; pGrp.style.display = 'inline'; }
-    const pChn = document.getElementById('slChannelPreviewBtn');
-    if (pChn) { pChn.href = whatsappChannelLink; pChn.style.display = 'inline'; }
-    setTimeout(() => setFb(fb, '', ''), 5000);
- } catch (e) { setFb(fb, ' ' + e.message, 'err'); }
 }
 // ── USERS ───────────────────────────────────────────────────────
 // "Active Now" = any user whose account made an authenticated request in the last 24 hours.
