@@ -31,6 +31,10 @@ const PRODUCTS_PATH = '/stubs/buy-accounts.php';  // "Buy Accounts API"
 function register(app, deps) {
   const { mongoose, User, Transaction, auth, anyAdminAuth } = deps;
   const adminAuth = deps.adminAuth || anyAdminAuth; // owner-only for anything that changes prices
+  // Marketplace = RakibSocials (same Marketplace 2 as the Marvel Nums site). Needs RAKIB_API_KEY on Render.
+  try {
+    require('./market2').register(app, { mongoose, User, Transaction, auth, anyAdminAuth, sendAdminEmail: deps.sendAdminEmail || (async () => ({ sent: false })), brandLogoFor: deps.brandLogoFor });
+  } catch (e) { console.error('[market2] could not start:', e.message); }
 
   const apiKey = () => String(process.env.BENOTP_API_KEY || '').trim();
   const baseUrl = () => {
@@ -264,160 +268,149 @@ function register(app, deps) {
   const getSvc = () => cachedList(() => svcCache, (x) => { svcCache = x; }, 'getServices', 'svc');
   const getCty = () => cachedList(() => ctyCache, (x) => { ctyCache = x; }, 'getCountries', 'cty');
   const warm = () => { getSvc().catch(() => {}); getCty().catch(() => {}); };
-  setTimeout(warm, 1500);
-  setInterval(warm, FRESH_MS).unref();
+  // BenOTP number pre-loading switched off: numbers now come from Grizzly SMS.
 
-  // ═════════════════════ CRUISE TECH LOGS - SMS NUMBERS PROVIDER ═════════════════════
-  // These routes are registered BEFORE the old BenOTP number routes, so they answer first.
-  //   Render environment:  CRUISE_API_KEY=<your token>     CRUISE_NETWORK=5   (5 = All Countries Short Term 1, 6 = Short Term 2)
-  // Flow: country -> service (with price) -> buy. Money is only ever taken for a service whose price could be read.
-  const CRUISE_BASE = 'https://api.cruisetechlogs.com';
-  const cruiseKey = () => String(process.env.CRUISE_API_KEY || '').trim();
-  const cruiseNetwork = () => String(process.env.CRUISE_NETWORK || '5').trim();
-  const cruiseType = () => 'short_term';
+  // ═════════════════════ GRIZZLY SMS - SMS NUMBERS PROVIDER ═════════════════════
+  // Same provider and same buying logic as the Marvel Nums site. These routes are registered BEFORE the old
+  // BenOTP number routes, so they answer first.   Render environment:
+  //   GRIZZLY_API_KEY=<your key>      GRIZZLY_USD_NGN=1650   (naira per $1; Grizzly prices are in dollars)
+  //   GRIZZLY_BASE_URL (optional)     GRIZZLY_ROUND=50       (round prices up to the nearest N naira)
+  const crypto = require('crypto');
+  const GZ_ERRORS = {
+    BAD_KEY: 'The number provider rejected our API key. Please contact support.',
+    BAD_ACTION: 'The number provider rejected the request.',
+    NO_BALANCE: 'Numbers are temporarily unavailable. Please try again later or contact support.',
+    NO_NUMBERS: 'No numbers are available for that choice right now. Try another country or pool.',
+    WRONG_SERVICE: 'That service is not available for sale. Pick another one.',
+    SERVICE_UNAVAILABLE_REGION: 'That service is blocked in this region right now.',
+    NO_ACTIVATION: 'That order no longer exists on the provider side.',
+    EARLY_CANCEL_DENIED: 'You can only cancel 2 minutes after buying the number. Please wait a little and try again.'
+  };
+  const gzKey = () => String(process.env.GRIZZLY_API_KEY || '').trim();
+  const gzBase = () => String(process.env.GRIZZLY_BASE_URL || 'https://api.grizzlysms.com/stubs/handler_api.php').trim();
+  const gzRate = () => { const n = Number(process.env.GRIZZLY_USD_NGN); return n > 0 ? n : 1650; };
+  const gzRound = () => { const n = Number(process.env.GRIZZLY_ROUND); return n > 0 ? n : 50; };
 
-  async function cruiseCall(path, params) {
-    const key = cruiseKey();
-    if (!key) throw new ProviderError('This service is not set up yet. Please contact support.', false);
+  async function gzCall(action, params) {
+    if (!gzKey()) throw new ProviderError('Numbers are not set up yet. Please contact support.', false);
     let res;
     try {
-      res = await axios.request({ method: 'GET', url: CRUISE_BASE + path, params, headers: { Authorization: 'Bearer ' + key, Accept: 'application/json' }, timeout: 30000, responseType: 'text', transformResponse: [(x) => x], validateStatus: () => true });
-    } catch (e) { throw new ProviderError('The provider could not be reached.', true); }
-    if (res.status >= 500) throw new ProviderError('The provider is having problems right now.', true);
-    let d;
-    try { d = JSON.parse(String(res.data || '')); } catch (e) { throw new ProviderError('The provider sent an unreadable answer.', true); }
-    const code = Number(d && d.code != null ? d.code : res.status);
-    const st = String((d && d.status) || '').toLowerCase();
-    if (res.status >= 400 || code >= 400 || (st && st !== 'success')) throw new ProviderError(String((d && d.message) || 'The provider refused the request.'), false);
-    return d;
+      res = await axios.get(gzBase(), { params: { api_key: gzKey(), action, ...(params || {}) }, timeout: 25000, responseType: 'text', transformResponse: [(x) => x], validateStatus: () => true });
+    } catch (e) { throw new ProviderError('Could not reach the number provider. Please try again shortly.', true); }
+    if (res.status >= 500) throw new ProviderError('The number provider is having problems right now.', true);
+    const text = String(res.data == null ? '' : res.data).trim();
+    let body = text;
+    if (/^[\[{]/.test(text)) { try { body = JSON.parse(text); } catch (e) { /* keep text */ } }
+    if (typeof body === 'string' && /^[A-Z_]+$/.test(body) && !body.startsWith('STATUS_') && !body.startsWith('ACCESS_')) {
+      throw new ProviderError(GZ_ERRORS[body] || ('The number provider said: ' + body), false);
+    }
+    return body;
   }
-  const cruiseMem = new Map();
-  async function cruiseCached(key, ttl, fn) {
-    const c = cruiseMem.get(key);
+  const gzMem = new Map();
+  async function gzCached(key, ttl, fn) {
+    const c = gzMem.get(key);
     if (c && Date.now() - c.at < ttl) return c.v;
     const v = await fn();
-    cruiseMem.set(key, { at: Date.now(), v });
+    gzMem.set(key, { at: Date.now(), v });
+    if (gzMem.size > 500) gzMem.delete(gzMem.keys().next().value);
     return v;
   }
-  async function cruiseCountries() {
-    return cruiseCached('c', 10 * 60 * 1000, async () => {
-      const d = await cruiseCall('/rentals/countries', { network: cruiseNetwork(), type: cruiseType() });
-      const arr = (d.data && Array.isArray(d.data.countries)) ? d.data.countries : toList(d);
-      const out = arr.filter(c => c && c.id != null).map(c => ({ id: String(c.id), name: String(c.name || c.id) }));
-      console.log('[cruise] countries loaded:', out.length, 'network', cruiseNetwork(), out.length < 5 ? JSON.stringify(d).slice(0, 600) : '');
-      return out;
+  const prettyName = (n) => String(n || '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  async function gzServices() {
+    return gzCached('svc', 60 * 60 * 1000, async () => {
+      const r = await gzCall('getServicesList');
+      const list = (r && Array.isArray(r.services) ? r.services : []).filter(x => x && x.code).map(x => ({ id: String(x.code), name: prettyName(x.name || x.code) }));
+      if (!list.length) throw new ProviderError('Services could not be loaded. Please try again shortly.', false);
+      return list.sort((a, b) => a.name.localeCompare(b.name));
     });
   }
-  // The id Cruise wants for "Buy Number" is a base64 text such as base64("aor||short_term||2||5||5").
-  function buyIdFor(it, country) {
-    for (const k of Object.keys(it)) {
-      const v = it[k];
-      if (typeof v === 'string' && v.length >= 12 && /^[A-Za-z0-9+/=%]+$/.test(v)) {
-        try { if (Buffer.from(decodeURIComponent(v), 'base64').toString('utf8').includes('||')) return v; } catch (e) { /* not an id */ }
-      }
-    }
-    const code = pick(it, ['code', 'serviceCode', 'service_code', 'short', 'id']);
-    if (code == null || typeof code === 'object') return '';
-    return Buffer.from([code, cruiseType(), country, cruiseNetwork(), cruiseNetwork()].join('||')).toString('base64');
+  async function gzCountries() {
+    return gzCached('cty', 60 * 60 * 1000, async () => {
+      const r = await gzCall('getCountries');
+      const list = Object.values(r && typeof r === 'object' ? r : {}).filter(c => c && c.id != null && c.visible !== 0).map(c => ({ id: String(c.id), name: prettyName(c.eng || c.rus || c.id) }));
+      if (!list.length) throw new ProviderError('Countries could not be loaded. Please try again shortly.', false);
+      return list.sort((a, b) => a.name.localeCompare(b.name));
+    });
   }
-  function findArray(o, depth) {
-    if (o == null || typeof o !== 'object' || (depth || 0) > 5) return null;
-    if (Array.isArray(o)) return (o.length && o[0] && typeof o[0] === 'object') ? o : null;
-    for (const k of Object.keys(o)) { const r = findArray(o[k], (depth || 0) + 1); if (r) return r; }
-    return null;
-  }
-  const looseName = (it) => {
-    const n = pick(it, ['name', 'serviceName', 'service_name', 'service', 'title', 'label', 'app', 'platform']);
-    if (n != null && typeof n !== 'object') return String(n);
-    for (const k of Object.keys(it)) if (/name|service|title/i.test(k) && typeof it[k] === 'string' && it[k]) return it[k];
-    return '';
-  };
-  const looseCost = (it) => {
-    let c = readPrice(it);
-    if (c > 0) return c;
-    for (const k of Object.keys(it)) { if (/price|cost|amount|rate|fee|charge|ngn|naira/i.test(k) && typeof it[k] !== 'object') { const n = Number(String(it[k]).replace(/[^0-9.]/g, '')); if (n > 0) return n; } }
-    return NaN;
-  };
-  function parseCruiseServices(d, country) {
-    let inner = d && d.data != null ? d.data : d;
-    if (inner && !Array.isArray(inner) && typeof inner === 'object') inner = inner.services || inner.list || inner.items || inner;
-    const tryList = (list) => {
-      const out = [], seen = new Set();
-      for (const it of list) {
-        if (!it || typeof it !== 'object') continue;
-        const name = looseName(it), cost = looseCost(it), id = buyIdFor(it, country);
-        if (!id || !name || !(cost > 0) || seen.has(id)) continue; // never sell what we cannot price
-        seen.add(id);
-        out.push({ id, name, cost });
-      }
-      return out;
+  // Grizzly "pools" are price tiers: { "0.25": 1200, "0.40": 90 } = dollar price -> numbers in stock.
+  async function gzTiers(service, country, fresh) {
+    const get = async () => {
+      const d = await gzCall('getPricesV2', { service, country });
+      const t = (d && d[country] && d[country][service]) || {};
+      return Object.keys(t).filter(k => Number(t[k]) > 0 && Number(k) > 0).map(k => ({ usd: Number(k), count: Number(t[k]) })).sort((a, b) => a.usd - b.usd);
     };
-    let out = tryList(toList(inner));
-    if (!out.length) { const arr = findArray(d); if (arr) out = tryList(arr); }
-    return out;
+    return fresh ? get() : gzCached('p:' + service + ':' + country, 20 * 1000, get);
   }
-  async function cruiseServices(country) {
-    return cruiseCached('s:' + country, 2 * 60 * 1000, async () => {
-      const d = await cruiseCall('/rentals/services', { type: cruiseType(), network: cruiseNetwork(), countryID: country });
-      const list = parseCruiseServices(d, country);
-      if (!list.length) console.error('[cruise] no usable services for country', country, 'network', cruiseNetwork(), '- raw answer:', JSON.stringify(d).slice(0, 1200));
-      else console.log('[cruise] services for country', country + ':', list.length);
-      return list;
-    });
+  const gzPoolId = (service, country, usd) => crypto.createHash('sha256').update([service, country, usd, process.env.GRIZZLY_API_KEY || 'x'].join('|')).digest('hex').slice(0, 14);
+  // Price in naira: a fixed admin price wins; otherwise the admin markup % if one is set; otherwise the default profit ladder.
+  const GZ_LADDER = [[500, 300], [999, 450], [5000, 700], [10000, 1000]];
+  function gzSell(usd, service) {
+    const costNgn = Math.round(Number(usd) * gzRate());
+    const r = cfg.numberRules[service] || {};
+    if (hasNum(r.price) && Number(r.price) > 0) return Math.max(Math.ceil(Number(r.price)), costNgn);
+    let price;
+    if (hasNum(r.markup) || hasNum(cfg.numbersMarkup) || markupNumbers() > 0) price = sell(costNgn, hasNum(r.markup) ? Number(r.markup) : numbersPct());
+    else {
+      const tier = GZ_LADDER.find(t => costNgn <= t[0]);
+      price = costNgn + (tier ? tier[1] : Math.round(costNgn * 0.2));
+    }
+    const step = gzRound();
+    return Math.max(costNgn, Math.ceil(price / step) * step);
   }
-  function extractCode(msg) {
-    const t = String(msg || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#0?39;/g, "'");
-    const m = t.match(/(?<!\d)(\d{3})[- ](\d{3})(?!\d)/) || t.match(/(?<!\d)(\d{4,8})(?!\d)/);
-    return m ? m.slice(1).join('') : '';
-  }
-  async function cruiseCode(o) {
+  async function gzCode(o) {
     try {
-      const d = await cruiseCall('/rentals/getcode', { id: o.providerOrderId });
-      const arr = Array.isArray(d.data) ? d.data : (d.data ? [d.data] : []);
-      const m = arr.find(x => x && x.message);
-      if (!m) return null;
-      return { code: extractCode(m.message) || String(m.message).replace(/\s+/g, ' ').slice(0, 60), message: String(m.message) };
-    } catch (e) { return (e && e.ambiguous) ? undefined : null; } // null = nothing yet; undefined = could not check (provider unreachable)
+      const t = String(await gzCall('getStatus', { id: o.providerOrderId }) || '').trim();
+      if (t.startsWith('STATUS_OK:')) { const c = t.slice('STATUS_OK:'.length).trim(); return { code: c, message: c }; }
+      if (t.startsWith('STATUS_CANCEL')) return { cancelled: true };
+      return null; // STATUS_WAIT_CODE etc: nothing yet
+    } catch (e) { return (e && e.ambiguous) ? undefined : null; } // undefined = could not check (provider unreachable)
   }
+  async function gzCancel(o) { // throws if the provider refuses (e.g. the 2-minute rule)
+    const t = String(await gzCall('setStatus', { id: o.providerOrderId, status: 8 }) || '').trim();
+    if (!/ACCESS_CANCEL|ACCESS_ACTIVATION/i.test(t)) throw new ProviderError('The provider did not confirm the cancellation. Please try again in a moment.', false);
+  }
+  const gzFinished = (o) => { gzCall('setStatus', { id: o.providerOrderId, status: 6 }).catch(() => {}); };
 
   app.get('/api/rado/numbers/countries', auth, async (req, res) => {
-    try { res.json(await cruiseCountries()); } catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
+    try { res.json(await gzCountries()); } catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
   });
   app.get('/api/rado/numbers/services', auth, async (req, res) => {
-    try {
-      const c = String(req.query.country || '');
-      if (!c) return res.json([]);
-      res.json((await cruiseServices(c)).map(s => ({ id: s.id, name: s.name })));
-    } catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
+    try { await loadCfg(); res.json((await gzServices()).filter(s => !(cfg.numberRules[s.id] || {}).hidden)); }
+    catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
   });
   app.get('/api/rado/numbers/pools', auth, async (req, res) => {
     try {
-      const c = String(req.query.country || ''), sid = String(req.query.service || '');
+      const service = String(req.query.service || ''), country = String(req.query.country || '');
+      if (!service || !country) return res.json([]);
       await loadCfg();
-      const s = (await cruiseServices(c)).find(x => x.id === sid);
-      if (!s) return res.json([]);
-      res.json([{ id: '1', name: 'Short term number', price: numberSell(s.cost, s.name.toLowerCase()) }]);
+      if ((cfg.numberRules[service] || {}).hidden) return res.json([]);
+      const tiers = await gzTiers(service, country);
+      res.json(tiers.map((t, i) => ({ id: gzPoolId(service, country, t.usd), name: 'Pool ' + (i + 1), price: gzSell(t.usd, service) })).sort((a, b) => a.price - b.price));
     } catch (e) { res.status(e.ambiguous ? 502 : 400).json({ error: clientMsg(e) }); }
   });
 
   app.post('/api/rado/numbers/buy', auth, async (req, res) => {
-    const service = String(req.body.service || ''), country = String(req.body.country || '');
-    if (!service || !country) return res.status(400).json({ error: 'Choose a country and a service.' });
+    const service = String(req.body.service || ''), country = String(req.body.country || ''), poolId = String(req.body.pool || '');
+    if (!service || !country || !poolId) return res.status(400).json({ error: 'Choose a country, a service and a pool.' });
     if (!lockUser(req.user._id)) return res.status(429).json({ error: 'Please wait, your last request is still running.' });
     let order;
     try {
       await loadCfg();
-      const s = (await cruiseServices(country)).find(x => x.id === service);
-      if (!s) return res.status(400).json({ error: 'This service is not available right now. Please choose another.' });
-      const price = numberSell(s.cost, s.name.toLowerCase());
+      if ((cfg.numberRules[service] || {}).hidden) return res.status(400).json({ error: 'This service is not available for sale.' });
+      const tiers = await gzTiers(service, country, true); // live stock + price, never a stale amount
+      const tier = tiers.find(t => gzPoolId(service, country, t.usd) === poolId);
+      if (!tier) return res.status(400).json({ error: 'That pool just sold out. Please pick another one.' });
+      const price = gzSell(tier.usd, service);
       const expected = Number(req.body.expectedPrice);
       if (Number.isFinite(expected) && expected > 0 && price > expected) return res.status(409).json({ error: 'The price changed to ₦' + price.toLocaleString() + '. Please try again.', price });
-      const ctyName = ((await cruiseCountries()).find(c => c.id === country) || {}).name || country;
-      order = await Order.create({ kind: 'number', userId: req.user._id, userEmail: req.user.email, title: s.name + ' number (' + ctyName + ')', service: s.name, country: ctyName, pool: '1', cost: s.cost, sellPrice: price, status: 'pending' });
-      const user = await debit(req.user, price, 'SMS number - ' + s.name + ' (' + ctyName + ')');
+      const svcName = ((await gzServices()).find(x => x.id === service) || {}).name || service;
+      const ctyName = ((await gzCountries()).find(c => c.id === country) || {}).name || country;
+      const costNgn = Math.round(tier.usd * gzRate());
+      order = await Order.create({ kind: 'number', userId: req.user._id, userEmail: req.user.email, title: svcName + ' number (' + ctyName + ')', service: svcName, country: ctyName, pool: poolId, cost: costNgn, sellPrice: price, status: 'pending' });
+      const user = await debit(req.user, price, 'SMS number - ' + svcName + ' (' + ctyName + ')');
       if (!user) { await Order.updateOne({ _id: order._id }, { $set: { status: 'failed', refunded: true, note: 'Insufficient balance' } }); return res.status(400).json({ error: 'Insufficient balance. Please fund your wallet.' }); }
       let d;
-      try { d = await cruiseCall('/rentals/new', { id: s.id }); }
+      try { d = await gzCall('getNumberV2', { service, country, maxPrice: tier.usd }); }
       catch (e) {
         if (e.ambiguous) {
           await Order.updateOne({ _id: order._id }, { $set: { status: 'review', note: 'Provider outcome unknown: ' + e.message, updatedAt: new Date() } });
@@ -426,20 +419,17 @@ function register(app, deps) {
         await refund(order._id, e.message, 'failed');
         return res.status(400).json({ error: clientMsg(e) + ' Nothing was charged.' });
       }
-      const data = (d && d.data) || {};
-      const oid = data.ID || data.id || data.order_id, phone = data.number || data.phone || data.phone_number;
-      if (!oid || !phone) {
-        console.error('[cruise] buy answer unreadable:', JSON.stringify(d).slice(0, 300));
+      const aid = d && typeof d === 'object' ? d.activationId : null, phone = d && typeof d === 'object' ? d.phoneNumber : null;
+      if (!aid || !phone) {
+        console.error('[grizzly] buy answer unreadable:', JSON.stringify(d).slice(0, 300));
         await Order.updateOne({ _id: order._id }, { $set: { status: 'review', note: 'Provider answer could not be read - money held, admin to check.', updatedAt: new Date() } });
         return res.status(202).json({ pending: true, message: 'We could not confirm your order. If a number was issued it will appear in your orders; otherwise contact support to be refunded.' });
       }
-      const paid = Number(data.amount);
-      if (Number.isFinite(paid) && paid > s.cost + 1) console.error('[cruise] provider charged', paid, 'but the list price was', s.cost, 'for order', String(order._id));
-      await Order.updateOne({ _id: order._id }, { $set: { providerOrderId: String(oid), phoneNumber: String(phone), updatedAt: new Date() } });
+      await Order.updateOne({ _id: order._id }, { $set: { providerOrderId: String(aid), phoneNumber: String(phone), updatedAt: new Date() } });
       const fresh = await Order.findById(order._id);
       res.json({ ...shape(fresh), ok: true, orderId: String(order._id), phoneNumber: String(phone), newBalance: user.balance });
     } catch (e) {
-      console.error('[cruise] number buy failed:', e.message);
+      console.error('[grizzly] number buy failed:', e.message);
       res.status(500).json({ error: 'Purchase failed. If you were charged, contact support and you will be refunded.' });
     } finally { unlockUser(req.user._id); }
   });
@@ -449,10 +439,11 @@ function register(app, deps) {
       const o = await Order.findOne({ _id: req.params.id, userId: req.user._id, kind: 'number' });
       if (!o) return res.status(404).json({ error: 'Order not found.' });
       if (o.status === 'pending' && o.providerOrderId) {
-        const got = await cruiseCode(o);
-        if (got) { o.code = got.code; o.details = got.message; o.status = 'completed'; o.updatedAt = new Date(); await o.save(); }
+        const got = await gzCode(o);
+        if (got && got.code) { o.code = got.code; o.details = got.message; o.status = 'completed'; o.updatedAt = new Date(); await o.save(); gzFinished(o); }
+        else if (got && got.cancelled) await refund(o._id, 'Cancelled by provider', 'cancelled');
         else if (got !== undefined && Date.now() - new Date(o.createdAt).getTime() > ttlMs()) {
-          try { await cruiseCall('/rentals/close', { id: o.providerOrderId }); } catch (e) { /* still refund: no SMS arrived */ }
+          try { await gzCancel(o); } catch (e) { /* still refund: no SMS arrived */ }
           await refund(o._id, 'No SMS received in time', 'expired');
         }
       }
@@ -464,23 +455,15 @@ function register(app, deps) {
       const o = await Order.findOne({ _id: req.params.id, userId: req.user._id, kind: 'number' });
       if (!o) return res.status(404).json({ error: 'Order not found.' });
       if (o.status !== 'pending') return res.status(400).json({ error: 'This order can no longer be cancelled.' });
-      const got = await cruiseCode(o);
+      const got = await gzCode(o);
       if (got === undefined) return res.status(502).json({ error: 'We could not reach the provider to check this number. Please try again in a moment.' });
-      if (got) { o.code = got.code; o.details = got.message; o.status = 'completed'; await o.save(); return res.status(400).json({ error: 'The code has already arrived, so this order cannot be cancelled.' }); }
-      try { await cruiseCall('/rentals/close', { id: o.providerOrderId }); }
-      catch (e) { return res.status(400).json({ error: clientMsg(e) }); } // e.g. "can only be closed after 2 minutes"
+      if (got && got.code) { o.code = got.code; o.details = got.message; o.status = 'completed'; await o.save(); return res.status(400).json({ error: 'The code has already arrived, so this order cannot be cancelled.' }); }
+      if (!(got && got.cancelled)) {
+        try { await gzCancel(o); } catch (e) { return res.status(400).json({ error: clientMsg(e) }); } // e.g. the 2-minute rule
+      }
       await refund(o._id, 'Cancelled by customer', 'cancelled');
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: 'Could not cancel.' }); }
-  });
-  // Admin: shows what Cruise really sends back, to check the price/name/id fields were read correctly.
-  app.get('/api/rado/admin/cruise-test', anyAdminAuth, async (req, res) => {
-    try {
-      const country = String(req.query.country || '2');
-      const d = await cruiseCall('/rentals/services', { type: cruiseType(), network: cruiseNetwork(), countryID: country });
-      const parsed = parseCruiseServices(d, country);
-      res.json({ network: cruiseNetwork(), country, parsedCount: parsed.length, parsedSample: parsed.slice(0, 5), rawSample: JSON.stringify(d).slice(0, 1500) });
-    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   app.get('/api/rado/numbers/services', auth, async (req, res) => {
@@ -639,8 +622,7 @@ function register(app, deps) {
       }
     } catch (e) { /* warm-up is best-effort */ }
   }
-  setTimeout(warmPopular, 8000);
-  setInterval(warmPopular, 20 * 60 * 1000).unref();
+
   app.get('/api/rado/numbers/pools', auth, async (req, res) => {
     try {
       const service = String(req.query.service || ''), country = String(req.query.country || '');
@@ -785,10 +767,10 @@ function register(app, deps) {
       const rows = await Order.find({ kind: 'number', status: 'pending', refunded: false, providerOrderId: { $exists: true, $ne: '' }, createdAt: { $lt: cutoff } }).limit(25);
       for (const o of rows) {
         try {
-          const got = await cruiseCode(o);
+          const got = await gzCode(o);
           if (got === undefined) continue; // provider unreachable: try again next minute, never expire blindly
-          if (got) { o.code = got.code; o.details = got.message; o.status = 'completed'; o.updatedAt = new Date(); await o.save(); continue; }
-          try { await cruiseCall('/rentals/close', { id: o.providerOrderId }); } catch (e) { /* still refund: no SMS arrived */ }
+          if (got && got.code) { o.code = got.code; o.details = got.message; o.status = 'completed'; o.updatedAt = new Date(); await o.save(); gzFinished(o); continue; }
+          if (!(got && got.cancelled)) { try { await gzCancel(o); } catch (e) { /* still refund: no SMS arrived */ } }
           await refund(o._id, 'No SMS received in time', 'expired');
         } catch (e) { console.error('[benotp] expiry sweep failed for', String(o._id), e.message); }
       }

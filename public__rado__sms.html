@@ -17,7 +17,7 @@
 <h2>Purchase Number</h2><div id="bm" class="msg"></div>
 <label>1. Select Country</label><input id="cq" placeholder="Search country (e.g. United States)" style="margin-bottom:10px"><select id="country"><option value="">Loading countries…</option></select>
 <label>2. Select Service</label><input id="sq" placeholder="Search service (e.g. WhatsApp)" style="margin-bottom:10px"><select id="service" disabled><option value="">Select a country first</option></select>
-<label>3. Price</label><div id="pools" class="muted" style="font-size:18px;margin-bottom:6px">Choose a country and a service first.</div>
+<label>3. Choose Pool</label><div id="pools" class="muted" style="font-size:18px;margin-bottom:6px">Choose a country and a service first.</div>
 <div id="sum" class="card" style="display:none;margin:14px 0 0"></div>
 <br><button class="btn block" id="buy" disabled>🛒&nbsp; Confirm &amp; Buy Number</button></div>
 <div id="active"></div>
@@ -32,16 +32,13 @@ function drawSvc(){const q=$('#sq').value.trim().toLowerCase(),keep=$('#service'
 // Fast start: show the last saved lists instantly, then refresh both lists at the same time.
 const LS=(k)=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
 const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const c0=LS('rsh_ctys');
+const c0=LS('rsh_ctys'),s0=LS('rsh_svcs');
 if(c0&&c0.length){ctys=c0;$('#country').innerHTML=optList(ctys,'Select country')}
-drawSvc();
-await api('/api/rado/numbers/countries').then(v=>{ctys=v;SV('rsh_ctys',v);const keep=$('#country').value;drawCty();if(keep&&ctys.some(c=>c.id===keep))$('#country').value=keep}).catch(()=>{if(!ctys.length)$('#country').innerHTML='<option value="">Numbers unavailable right now</option>'});
-let svcSeq=0;
-async function loadServices(){const c=$('#country').value;svcs=[];const my=++svcSeq;
- if(!c){drawSvc();return}
- $('#service').disabled=true;$('#service').innerHTML='<option value="">Loading services…</option>';
- try{const v=await api('/api/rado/numbers/services?country='+encodeURIComponent(c));if(my!==svcSeq)return;svcs=v;drawSvc()}
- catch(e){if(my!==svcSeq)return;$('#service').innerHTML='<option value="">Could not load services</option>'}}
+if(s0&&s0.length){svcs=s0;drawSvc()}
+await Promise.all([
+ api('/api/rado/numbers/countries').then(v=>{ctys=v;SV('rsh_ctys',v);const keep=$('#country').value;drawCty();if(keep&&ctys.some(c=>c.id===keep))$('#country').value=keep}).catch(()=>{if(!ctys.length)$('#country').innerHTML='<option value="">Numbers unavailable right now</option>'}),
+ api('/api/rado/numbers/services').then(v=>{svcs=v;SV('rsh_svcs',v);drawSvc()}).catch(()=>{})
+]);
 function resetPool(msg){pool=null;$('#buy').disabled=true;$('#sum').style.display='none';$('#pools').className='muted';$('#pools').innerHTML=msg}
 function pickPool(p){pool=p;
  document.querySelectorAll('#pools .pool').forEach(el=>{const on=el.dataset.id===p.id;el.style.borderColor=on?'#16a34a':'#9ca3af';el.style.background=on?'#ecfdf3':'transparent';el.style.color=on?'#14532d':'inherit'});
@@ -61,7 +58,7 @@ async function loadPools(){const s=$('#service').value,c=$('#country').value;
   if(list.length===1)pickPool(list[0])}
  catch(e){if(my!==seq)return;resetPool(esc(e.message))}}
 $('#cq').oninput=drawCty;$('#sq').oninput=()=>{drawSvc();loadPools()};
-$('#country').onchange=async()=>{resetPool('Choose a country and a service first.');await loadServices();loadPools()};$('#service').onchange=loadPools;
+$('#country').onchange=()=>{drawSvc();loadPools()};$('#service').onchange=loadPools;
 $('#buy').onclick=async()=>{const m=$('#bm');m.className='msg';
  if(!pool)return;if(!await askConfirm('The amount will be deducted from your wallet balance.',{title:'Confirm purchase',okText:'Pay '+naira(pool.price),rows:[['Number',pool.name||'SMS number'],['Price',naira(pool.price)]]}))return;
  const b=$('#buy');b.disabled=true;b.innerHTML='<span class="spin"></span>Getting your number…';

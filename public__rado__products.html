@@ -17,17 +17,21 @@ function render(){const q=$('#q').value.trim().toLowerCase();let v=items.filter(
  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{cat=b.dataset.cat;render();window.scrollTo(0,0)});
  const bk=$('#back');if(bk)bk.onclick=()=>{cat='';render();window.scrollTo(0,0)}}
 function dlg(h){$('#dbox').innerHTML=h;$('#dlg').style.display='flex'}function close_(){$('#dlg').style.display='none'}W=window;
-async function buy(id){const i=items.find(x=>x.id===id);
+async function buy(id){const i=items.find(x=>String(x.id)===String(id));const ref=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('r'+Date.now()+Math.random().toString(36).slice(2));
  let body=`<h2>${esc(i.title)}</h2><p style="font-size:20px">Price each: <b>${naira(i.price)}</b></p><label>Quantity</label><input id="qty" type="number" min="1" max="${i.stock==null?100:Math.min(100,i.stock)}" value="1">`;
  body+=`<p class="muted" id="tot">Total: ${naira(i.price)}</p><p class="muted">Your wallet balance: ${naira(user.balance)}</p><div id="bm" class="msg"></div><div style="display:flex;gap:10px;margin-top:14px"><button class="btn white" style="border:1px solid #9ca3af" id="cn">Cancel</button><button class="btn" id="ok" style="flex:1">Confirm purchase</button></div>`;
  dlg(body);$('#cn').onclick=close_;
  $('#qty').oninput=()=>{const q=Math.max(1,parseInt($('#qty').value)||1);$('#tot').textContent='Total: '+naira(i.price*q)};
- $('#ok').onclick=async()=>{$('#ok').disabled=true;try{const d=await api('/api/rado/products/buy','POST',{id:i.id,amount:Math.max(1,parseInt($('#qty').value)||1)});user.balance=d.newBalance;
-  let out=`<h2>✅ ${esc(d.logTitle||i.title)}</h2><p class="muted">Purchase successful. New balance: ${naira(d.newBalance)}</p>`;
-  if(d.logDetails)out+=`<label>Details</label><textarea readonly rows="6">${esc(d.logDetails)}</textarea>`;
+ $('#ok').onclick=async()=>{$('#ok').disabled=true;try{const d=await api('/api/market2/buy','POST',{productId:i.productKey,quantity:Math.max(1,parseInt($('#qty').value)||1),clientRef:ref});
+  if(d.pending){dlg(`<h2>Order received</h2><p class="muted">${esc(d.message||'Your order is being processed. Your details will appear in Orders shortly.')}</p><button class="btn block" id="dn">Done</button>`);$('#dn').onclick=()=>{close_();load()};return}
+  if(d.balance!=null)user.balance=d.balance;
+  let out=`<h2>✅ ${esc(d.title||i.title)}</h2><p class="muted">Purchase successful.${d.balance!=null?' New balance: '+naira(d.balance):''}</p>`;
+  if(d.keys&&d.keys.length)out+=`<label>Details</label><textarea readonly rows="6">${esc(d.keys.join('\n'))}</textarea>`;
   out+=`<p class="muted">You can open this again any time from Orders.</p><button class="btn block" id="dn">Done</button>`;dlg(out);$('#dn').onclick=()=>{close_();load()}}
   catch(e){if(!e.shown)notify(e.message,'err');$('#ok').disabled=false}}}
-async function load(){items=await api('/api/rado/products');render()}
+async function load(){try{const st=await api('/api/market2/status');if(st&&st.market2Enabled===false){$('#list').innerHTML='<div class="card"><h2>Marketplace under maintenance</h2><p class="muted">'+esc(st.maintenanceMessage||'Please check back shortly.')+'</p></div>';return}}catch(e){}
+ try{items=await api('/api/market2/products')}catch(e){items=[];$('#list').innerHTML='<div class="card"><p class="muted">'+esc(e.message||'The marketplace could not be loaded right now.')+'</p></div>';return}
+ render()}
 $('#q').oninput=render;$('#qb').onclick=render;$('#sc').onclick=e=>{e.preventDefault();$('#drawer').classList.add('open');const b=document.querySelector('[data-tg=cats]');if(b&&!b.classList.contains('open'))b.click()};
 $('#dlg').onclick=e=>{if(e.target.id==='dlg')close_()};
 await load();})();</script></body></html>
