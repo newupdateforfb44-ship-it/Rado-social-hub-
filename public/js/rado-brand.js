@@ -92,7 +92,11 @@ try{if(location.pathname==='/'&&localStorage.getItem('rsh_token'))location.repla
   function buildDrift(){
     try{
       if(document.getElementById('kb-drift')||!document.body) return;
+      // Admin panel is a working screen: no moving background text there.
+      if(document.querySelector('.adm-drawer')||document.getElementById('rpMkNum')) return;
       var wrap=document.createElement('div'); wrap.id='kb-drift'; wrap.setAttribute('aria-hidden','true');
+      // Inline safety net: if the stylesheet is late/missing, this must never show as big text in the page.
+      wrap.style.cssText='position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden';
       var small=window.innerWidth<700, rows=small?9:11, h=window.innerHeight||800;
       for(var i=0;i<rows;i++){
         var row=document.createElement('div');
