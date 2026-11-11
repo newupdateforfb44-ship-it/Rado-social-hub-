@@ -73,6 +73,8 @@ function register(app, deps) {
     lowBalanceNgn: { type: Number, default: Number(process.env.RAKIB_LOW_BALANCE_NGN || 5000) },
     alertEmail: { type: String, default: '' },
     defaultMarkupNgn: { type: Number, default: null },   // MVN-MARKUP-CONTROLS: null = use the built-in default
+    markupMode: { type: String, enum: ['fixed', 'percent'], default: 'fixed' }, // 'fixed' = add a naira amount, 'percent' = add a percentage
+    markupPercent: { type: Number, default: null },      // used only when markupMode = 'percent'
     lastBalance: { type: Number, default: 0 },
     lastBalanceAt: { type: Date, default: null },
     lastBalanceError: { type: String, default: '' },
@@ -182,6 +184,22 @@ function register(app, deps) {
     return cache;
   }
 
+  // Default selling price when the admin has not typed a custom price for a product.
+  // Mode 'fixed'   : cost + a naira amount      (e.g. +500  ->  1000 becomes 1500)
+  // Mode 'percent' : cost + a percentage of it  (e.g. +50%  ->  1000 becomes 1500)
+  // Only ONE mode is ever used at a time.
+  function defaultPriceFor(cost, mkCfg) {
+    cost = Number(cost) || 0;
+    if (cost <= 0) return 0;
+    if (mkCfg && mkCfg.markupMode === 'percent' && mkCfg.markupPercent !== null && mkCfg.markupPercent !== undefined && Number(mkCfg.markupPercent) >= 0) {
+      return Math.ceil(cost * (1 + Number(mkCfg.markupPercent) / 100));
+    }
+    const fixed = (mkCfg && mkCfg.defaultMarkupNgn !== null && mkCfg.defaultMarkupNgn !== undefined && Number(mkCfg.defaultMarkupNgn) >= 0)
+      ? Number(mkCfg.defaultMarkupNgn)
+      : Math.max(0, Number(process.env.RAKIB_DEFAULT_MARKUP_NGN || 300) || 0);
+    return cost + fixed;
+  }
+
   async function mergedProducts(force) {
     const { categories, products } = await loadCatalogue(force);
     const catName = new Map(categories.map(c => [Number(c.id), c.name]));
@@ -191,8 +209,8 @@ function register(app, deps) {
     return products.map(p => {
       const o = byId.get(Number(p.id)) || {};
       const cost = Number(p.price) || 0;
-      const defaultMarkup = (mkCfg.defaultMarkupNgn !== null && mkCfg.defaultMarkupNgn !== undefined && Number(mkCfg.defaultMarkupNgn) >= 0) ? Number(mkCfg.defaultMarkupNgn) : Math.max(0, Number(process.env.RAKIB_DEFAULT_MARKUP_NGN || 300) || 0);
-      const sell = Number(o.sellPrice) > 0 ? Number(o.sellPrice) : (cost > 0 ? cost + defaultMarkup : 0);
+      const defaultPrice = defaultPriceFor(cost, mkCfg);
+      const sell = Number(o.sellPrice) > 0 ? Number(o.sellPrice) : defaultPrice;
       const category = catName.get(Number(p.category_id)) || 'Other';
       const name = p.name || 'Account';
       const stock = Math.max(0, Number(p.stock) || 0);
@@ -213,7 +231,7 @@ function register(app, deps) {
         enabled: o.enabled !== false,
         priced: sell > 0,
         customPrice: Number(o.sellPrice) > 0,
-        defaultPrice: cost > 0 ? cost + defaultMarkup : 0
+        defaultPrice
       };
     });
   }
@@ -335,6 +353,15 @@ function register(app, deps) {
   app.get('/api/market2/status', async (req, res) => {
     try { const c = await getCfg(); res.json({ market2Enabled: c.market2Enabled, maintenanceMessage: c.maintenanceMessage }); }
     catch (e) { res.json({ market2Enabled: true, maintenanceMessage: '' }); }
+  });
+
+  // Categories for the customer menu: ONLY categories of products customers can really buy.
+  app.get('/api/rado/products/categories', auth, async (req, res) => {
+    try {
+      const names = new Set((await mergedProducts(false)).filter(p => p.priced && p.enabled).map(p => p.category));
+      try { if (hooks.ownProducts) (await hooks.ownProducts()).forEach(o => { if (o.category) names.add(o.category); }); } catch (e) { /* ignore */ }
+      res.json([...names].sort().map(name => ({ name })));
+    } catch (e) { res.json([]); }
   });
 
   app.get('/api/market2/products', async (req, res) => {
@@ -563,6 +590,19 @@ function register(app, deps) {
         c.defaultMarkupNgn = Math.round(n);
       }
     }
+    if (b.markupMode !== undefined) {
+      if (b.markupMode !== 'fixed' && b.markupMode !== 'percent') return res.status(400).json({ error: 'Choose either a fixed amount or a percentage.' });
+      c.markupMode = b.markupMode;
+    }
+    if (b.markupPercent !== undefined) {
+      if (b.markupPercent === null || b.markupPercent === '') c.markupPercent = null;
+      else {
+        const n = Number(b.markupPercent);
+        if (!Number.isFinite(n) || n < 0 || n > 1000) return res.status(400).json({ error: 'Percentage must be between 0 and 1000.' });
+        c.markupPercent = Math.round(n * 100) / 100;
+      }
+    }
+    if (c.markupMode === 'percent' && (c.markupPercent === null || c.markupPercent === undefined)) return res.status(400).json({ error: 'Enter the percentage to add.' });
     if (typeof b.apiKey === 'string' && b.apiKey.trim()) c.apiKeyCipher = encryptSecret(b.apiKey.trim());
     if (typeof b.baseUrl === 'string' && b.baseUrl.trim()) {
       try { const u = new URL(b.baseUrl.trim()); if (u.protocol !== 'https:' || u.hostname !== 'rakibsocials.com') return res.status(400).json({ error: 'Use the official HTTPS provider API URL.' }); c.customBaseUrl = b.baseUrl.trim().replace(/\/+$/, ''); }

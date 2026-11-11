@@ -915,14 +915,9 @@ function register(app, deps) {
     catch (e) { res.status(400).json({ error: 'Could not delete the logo.' }); }
   });
 
-  app.get('/api/rado/products', auth, async (req, res) => {
-    try { const all = await loadProducts(); await loadLogos(); res.json(visibleProducts(all).map(publicProduct).map(withLogo)); }
-    catch (e) { res.status(502).json({ error: clientMsg(e) }); }
-  });
-  app.get('/api/rado/products/categories', auth, async (req, res) => {
-    try { const all = await loadProducts(); res.json([...new Set(visibleProducts(all).map(p => p.category))].sort().map(name => ({ name }))); }
-    catch (e) { res.json([]); }
-  });
+  // The old BenOTP product list is retired: customers buy products from Marketplace 2 (/api/market2/*).
+  // These routes stay only so old browser tabs get a clean answer instead of an error.
+  app.get('/api/rado/products', auth, (req, res) => res.json([]));
 
   function formatDelivery(d) {
     const body = (d && typeof d === 'object' && !Array.isArray(d) && d.data != null) ? d.data : d;
@@ -931,41 +926,7 @@ function register(app, deps) {
     if (Array.isArray(body)) return body.map(line).join('\n');
     return line(body);
   }
-  app.post('/api/rado/products/buy', auth, async (req, res) => {
-    const id = String(req.body.id || ''), amount = Math.max(1, Math.min(100, parseInt(req.body.amount, 10) || 1));
-    if (!id) return res.status(400).json({ error: 'Choose a product.' });
-    if (!lockUser(req.user._id)) return res.status(429).json({ error: 'Please wait, your last request is still running.' });
-    try {
-      let product;
-      try { product = (await loadProducts(true)).find(p => p.id === id); } catch (e) { return res.status(502).json({ error: clientMsg(e) }); }
-      if (!product || (cfg.productRules[product.id] || {}).hidden) return res.status(404).json({ error: 'This product is no longer available.' });
-      if (product.stock != null && product.stock < amount) return res.status(400).json({ error: 'Not enough stock. Only ' + product.stock + ' left.' });
-      const total = product.price * amount;
-      const order = await Order.create({ kind: 'product', userId: req.user._id, userEmail: req.user.email, title: product.title, productId: id, quantity: amount, cost: product.cost * amount, sellPrice: total, status: 'pending' });
-      const user = await debit(req.user, total, 'Bought ' + product.title);
-      if (!user) { await Order.updateOne({ _id: order._id }, { $set: { status: 'failed', refunded: true, note: 'Insufficient balance' } }); return res.status(400).json({ error: 'Insufficient balance. Please fund your wallet.' }); }
-      let d;
-      try { d = await call(PRODUCTS_PATH, { action: 'buyProduct', id, amount }, { method: 'POST', timeout: 60000 }); }
-      catch (e) {
-        // POLICY: products are never auto-refunded - a "failed" answer is often just a network glitch. Admin decides.
-        await Order.updateOne({ _id: order._id }, { $set: { status: 'review', note: (e.ambiguous ? 'Provider outcome unknown: ' : 'Provider reported a failure: ') + e.message + ' - money held, admin to send the log or refund.', updatedAt: new Date() } });
-        console.error('[benotp] product order held for review', String(order._id));
-        return res.status(202).json({ pending: true, message: 'We could not confirm your order. If it went through it will appear in your Orders; otherwise contact support to be refunded.' });
-      }
-      const details = formatDelivery(d);
-      await Order.updateOne({ _id: order._id }, { $set: { status: 'completed', details, providerOrderId: String(deepFind(d, ['order_id', 'orderId', 'id']) || ''), updatedAt: new Date() } });
-      // Save to the customer's purchases FIRST (retry), so the delivery can never be lost.
-      for (let i = 0; i < 3; i++) {
-        try { await User.updateOne({ _id: user._id }, { $push: { purchaseDetails: { logId: order._id, logTitle: product.title, logType: 'log', logDetails: details, pricePaid: total, source: 'benotp', purchasedAt: new Date() } } }); break; }
-        catch (e) { await new Promise(r => setTimeout(r, 300 * (i + 1))); }
-      }
-      prodCache = { at: 0, v: null };
-      res.json({ ok: true, logTitle: product.title, logDetails: details, newBalance: user.balance });
-    } catch (e) {
-      console.error('[benotp] product buy failed:', e.message);
-      res.status(500).json({ error: 'Purchase failed. If you were charged, contact support and you will be refunded.' });
-    } finally { unlockUser(req.user._id); }
-  });
+  app.post('/api/rado/products/buy', auth, (req, res) => res.status(410).json({ error: 'This product list is no longer available. Please refresh the page.' }));
 
   // ═════════════════════════ ADMIN: PRICES & MARKUP ════════════════════════
   // Everything the admin panel's "Services & Prices" page needs. Writes are owner-only.
@@ -981,10 +942,6 @@ function register(app, deps) {
         const svc = toList(await call(NUMBERS_PATH, { action: 'getServices' })).map(normItem);
         out.numbers = svc.map(x => ({ id: x.id, name: (cfg.numberRules[x.id] || {}).name || x.name, ...(cfg.numberRules[x.id] ? { price: cfg.numberRules[x.id].price, markup: cfg.numberRules[x.id].markup, hidden: !!cfg.numberRules[x.id].hidden } : { price: null, markup: null, hidden: false }) }));
       } catch (e) { out.errors.numbers = e.message; }
-      try {
-        const list = await loadProducts(true);
-        out.products = list.map(p => { const r = cfg.productRules[p.id] || {}; return { id: p.id, title: p.title, category: p.category, cost: Math.ceil(p.cost * multiplier()), price: p.price, stock: p.stock, customPrice: hasNum(r.price) ? Number(r.price) : null, hidden: !!r.hidden }; });
-      } catch (e) { out.errors.products = e.message; }
       res.json(out);
     } catch (e) { res.status(500).json({ error: 'Could not load prices.' }); }
   });
