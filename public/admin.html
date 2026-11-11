@@ -504,14 +504,25 @@ tr:hover td{background:rgba(255,255,255,.035)}
     <div id="tab-pricing" class="tab-panel">
       <div class="sec">
         <div class="sec-title"><svg class="icon i-banknote" aria-hidden="true"><use href="#i-banknote"/></svg> Markup</div>
-        <div class="info-box">The markup is the percentage added on top of what the provider charges you. Leave a box empty to use the server default. Changes apply to customers within seconds.</div>
+        <div class="info-box"><b>Products markup</b> &mdash; choose <u>one</u> way to add your profit on top of the provider price. It applies to every product that has no custom price. Products where you typed a custom price below are not changed. Changes apply to customers within seconds.</div>
         <div class="info-box" id="rpMkNow" style="font-weight:600"></div>
         <div class="form-row">
-          <div class="fg"><label>SMS numbers markup (%)</label><input type="number" id="rpMkNum" min="0" max="1000" step="0.1" placeholder="e.g. 20"/></div>
-          <div class="fg"><label>Products markup (%)</label><input type="number" id="rpMkProd" min="0" max="1000" step="0.1" placeholder="e.g. 20"/></div>
+          <div class="fg"><label>How do you want to add profit?</label>
+            <select id="rpMkMode" onchange="rpMkModeChange()">
+              <option value="fixed">Add a fixed amount (&#8358;)</option>
+              <option value="percent">Add a percentage (%)</option>
+            </select></div>
+          <div class="fg"><label id="rpMkValLabel">Amount to add (&#8358;)</label><input type="number" id="rpMkVal" min="0" step="any" inputmode="decimal" placeholder="e.g. 500"/></div>
         </div>
+        <div id="rpMkExample" style="font-size:13px;margin:4px 0 12px;color:var(--t2)"></div>
         <button class="btn-gold" type="button" style="width:auto" onclick="rpSaveMarkups()">Save markup</button>
         <span id="rpMkMsg" style="margin-left:10px;font-size:13px"></span>
+        <hr style="border:0;border-top:1px solid rgba(128,128,128,.25);margin:18px 0"/>
+        <div class="form-row">
+          <div class="fg"><label>SMS numbers markup (%)</label><input type="number" id="rpMkNum" min="0" max="1000" step="0.1" placeholder="e.g. 20"/></div>
+        </div>
+        <button class="btn-gold" type="button" style="width:auto" onclick="rpSaveNumMarkup()">Save numbers markup</button>
+        <span id="rpMkMsg2" style="margin-left:10px;font-size:13px"></span>
       </div>
 
       <div class="sec">
@@ -532,7 +543,7 @@ tr:hover td{background:rgba(255,255,255,.035)}
 
       <div class="sec">
         <div class="sec-title"><svg class="icon i-package" aria-hidden="true"><use href="#i-package"/></svg> Products — price of each product</div>
-        <div class="info-box">The customer price is the price for one unit. Enter a custom price to override the markup for that product, or leave it empty to follow the markup above.</div>
+        <div class="info-box">These are the products your customers see (Marketplace 2). &ldquo;Customer pays&rdquo; is the price for one unit. Type a custom price to override the markup for that product, or leave it empty to follow the markup above. Tick <b>Hide</b> to remove a product from the customer panel.</div>
         <div class="form-row">
           <div class="fg" style="flex:2"><input type="text" id="rpProdSearch" placeholder="Search products…" oninput="rpRenderProducts()"/></div>
           <div class="fg"><select id="rpProdCat" onchange="rpRenderProducts()"></select></div>
@@ -2414,28 +2425,59 @@ const rpEsc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/<
 const rpNgn = (n) => '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 function rpMsg(id, text, ok){ const el = document.getElementById(id); if (!el) return; el.textContent = text; el.style.color = ok ? 'var(--green)' : 'var(--red)'; }
 
+let rpM2Cfg = null;
 async function rpLoad(){
   try {
-    rpData = await aFetch('/api/rado/admin/pricing');
+    const [pricing, prods, cfg] = await Promise.all([
+      aFetch('/api/rado/admin/pricing'),
+      aFetch('/api/admin/market2/products').catch(e => ({ __err: e.message })),
+      aFetch('/api/admin/market2/config').catch(() => null)
+    ]);
+    rpData = pricing; rpM2Cfg = cfg;
+    rpData.products = []; rpData.errors = rpData.errors || {};
+    if (Array.isArray(prods)) {
+      rpData.products = prods.map(p => ({ id: String(p.id), title: p.customTitle || p.name, category: p.category, cost: p.cost, price: p.sellPrice,
+        stock: p.stock, customPrice: p.customPrice ? p.sellPrice : null, hidden: p.enabled === false }));
+    } else if (prods && prods.__err) rpData.errors.products = prods.__err;
+
     document.getElementById('rpMkNum').value = rpData.markups.numbersIsCustom ? rpData.markups.numbers : '';
-    document.getElementById('rpMkProd').value = rpData.markups.productsIsCustom ? rpData.markups.products : '';
     document.getElementById('rpMkNum').placeholder = 'Default: ' + rpData.markups.numbers + '%';
-    document.getElementById('rpMkProd').placeholder = 'Default: ' + rpData.markups.products + '%';
-    (function(){ var pm = rpData.markups.products, nm = rpData.markups.numbers;
-      document.getElementById('rpMkNow').innerHTML = 'Right now: products markup <b>' + pm + '%</b> · numbers markup <b>' + nm + '%</b>. All prices are in Naira.<br>Customer price = provider price × (1 + markup%). Example: a ₦2,000 product sells for ₦' + Math.ceil(2000 * (1 + pm / 100)).toLocaleString() + '.'; })();
+    const mode = (cfg && cfg.markupMode === 'percent') ? 'percent' : 'fixed';
+    document.getElementById('rpMkMode').value = mode;
+    document.getElementById('rpMkVal').value = mode === 'percent' ? (cfg && cfg.markupPercent != null ? cfg.markupPercent : '') : (cfg && cfg.defaultMarkupNgn != null ? cfg.defaultMarkupNgn : '');
+    rpMkModeChange();
     const sel = document.getElementById('rpPvService');
     sel.innerHTML = rpData.numbers.map(n => '<option value="' + rpEsc(n.id) + '">' + rpEsc(n.name) + '</option>').join('');
     const cats = [...new Set(rpData.products.map(p => p.category))].sort();
     document.getElementById('rpProdCat').innerHTML = '<option value="">All categories</option>' + cats.map(c => '<option>' + rpEsc(c) + '</option>').join('');
     rpRenderNumbers(); rpRenderProducts();
     rpLoadLogos();
-    if (rpData.errors && rpData.errors.numbers) document.getElementById('rpNumList').innerHTML = '<p style="color:var(--red)">Could not load services: ' + rpEsc(rpData.errors.numbers) + '</p>';
-    if (rpData.errors && rpData.errors.products) document.getElementById('rpProdList').innerHTML = '<p style="color:var(--red)">Could not load products: ' + rpEsc(rpData.errors.products) + '</p>';
+    if (rpData.errors.numbers) document.getElementById('rpNumList').innerHTML = '<p style="color:var(--red)">Could not load services: ' + rpEsc(rpData.errors.numbers) + '</p>';
+    if (rpData.errors.products) document.getElementById('rpProdList').innerHTML = '<p style="color:var(--red)">Could not load products: ' + rpEsc(rpData.errors.products) + '</p>';
   } catch (e) {
     const m = '<p style="color:var(--red)">' + rpEsc(e.message) + '</p>';
     document.getElementById('rpNumList').innerHTML = m; document.getElementById('rpProdList').innerHTML = m;
   }
   rpLoadCountries(); rpLoadOrders();
+}
+function rpMkModeChange(){
+  const mode = document.getElementById('rpMkMode').value;
+  const inp = document.getElementById('rpMkVal');
+  document.getElementById('rpMkValLabel').innerHTML = mode === 'percent' ? 'Percentage to add (%)' : 'Amount to add (&#8358;)';
+  inp.placeholder = mode === 'percent' ? 'e.g. 25' : 'e.g. 500';
+  inp.max = mode === 'percent' ? 1000 : 1000000;
+  rpMkPreview();
+  if (!inp.dataset.bound) { inp.dataset.bound = '1'; inp.addEventListener('input', rpMkPreview); }
+}
+function rpMkPreview(){
+  const mode = document.getElementById('rpMkMode').value;
+  const raw = document.getElementById('rpMkVal').value.trim();
+  const v = raw === '' ? null : Number(raw);
+  const ex = [1000, 1500, 2000];
+  const price = (c) => mode === 'percent' ? Math.ceil(c * (1 + (v || 0) / 100)) : c + (v || 0);
+  const live = (v === null) ? 'Nothing typed yet, so the built-in default is used.' : (mode === 'percent' ? 'Every product gets <b>+' + v + '%</b>.' : 'Every product gets <b>+' + rpNgn(v) + '</b>.');
+  document.getElementById('rpMkNow').innerHTML = 'Right now: ' + live + ' All prices are in Naira.';
+  document.getElementById('rpMkExample').innerHTML = v === null ? '' : 'Example: ' + ex.map(c => rpNgn(c) + ' &rarr; <b>' + rpNgn(price(c)) + '</b>').join(' &nbsp;·&nbsp; ');
 }
 
 function rpImgToData(file){return new Promise(function(ok,bad){var fr=new FileReader();fr.onerror=function(){bad(new Error('Could not read the picture'))};fr.onload=function(){var im=new Image();im.onerror=function(){bad(new Error('That file is not a picture'))};im.onload=function(){var S=192,c=document.createElement('canvas');c.width=c.height=S;var x=c.getContext('2d');var r=Math.min(S/im.width,S/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,(S-w)/2,(S-h)/2,w,h);ok(c.toDataURL('image/png'))};im.src=fr.result};fr.readAsDataURL(file)})}
@@ -2472,10 +2514,20 @@ async function rpLoadCountries(){
 }
 async function rpSaveMarkups(){
   try {
-    const v = (id) => { const x = document.getElementById(id).value.trim(); return x === '' ? null : Number(x); };
-    await aFetch('/api/rado/admin/pricing/markups', 'PUT', { numbers: v('rpMkNum'), products: v('rpMkProd') });
-    rpMsg('rpMkMsg', 'Saved.', true); rpLoad();
+    const mode = document.getElementById('rpMkMode').value;
+    const raw = document.getElementById('rpMkVal').value.trim();
+    if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) throw new Error(mode === 'percent' ? 'Enter the percentage to add, for example 25.' : 'Enter the amount to add in naira, for example 500.');
+    const body = mode === 'percent' ? { markupMode: 'percent', markupPercent: Number(raw) } : { markupMode: 'fixed', defaultMarkupNgn: Number(raw) };
+    await aFetch('/api/admin/market2/config', 'PUT', body);
+    rpMsg('rpMkMsg', 'Saved. Customers see the new prices now.', true); rpLoad();
   } catch (e) { rpMsg('rpMkMsg', e.message, false); }
+}
+async function rpSaveNumMarkup(){
+  try {
+    const x = document.getElementById('rpMkNum').value.trim();
+    await aFetch('/api/rado/admin/pricing/markups', 'PUT', { numbers: x === '' ? null : Number(x), products: null });
+    rpMsg('rpMkMsg2', 'Saved.', true); rpLoad();
+  } catch (e) { rpMsg('rpMkMsg2', e.message, false); }
 }
 function rpRenderNumbers(){
   if (!rpData) return;
@@ -2524,12 +2576,13 @@ function rpRenderProducts(){
     '</tbody></table></div>' + (total > rows.length ? '<p style="color:var(--t2);font-size:12px">Showing the first ' + rows.length + ' of ' + total + '. Use search or the category filter to narrow the list.</p>' : '');
 }
 async function rpSaveProduct(btn, reset){
-  const tr = btn.closest('tr'), id = tr.dataset.id, item = rpData.products.find(p => p.id === id);
+  const tr = btn.closest('tr'), id = tr.dataset.id;
   const raw = tr.querySelector('.rp-pr').value.trim();
-  const body = reset ? { kind: 'product', id, name: item.title, price: null, hidden: false }
-    : { kind: 'product', id, name: item.title, price: raw === '' ? null : Number(raw), hidden: tr.querySelector('.rp-hd').checked };
+  // sellPrice 0 = "no custom price, follow the markup"
+  const body = reset ? { sellPrice: 0, enabled: true }
+    : { sellPrice: raw === '' ? 0 : Number(raw), enabled: !tr.querySelector('.rp-hd').checked };
   btn.disabled = true;
-  try { await aFetch('/api/rado/admin/pricing/rule', 'PUT', body); await rpLoad(); }
+  try { await aFetch('/api/admin/market2/products/' + encodeURIComponent(id), 'PUT', body); await rpLoad(); }
   catch (e) { alert(e.message); btn.disabled = false; }
 }
 async function rpLoadOrders(){
