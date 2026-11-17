@@ -70,7 +70,7 @@ app.get('/healthz/db', async (req, res) => {
 // ── Rado Social Hub front end (only these pages exist) ─────────────────────
 const RADO_PAGES = { '/': 'home', '/admin-logs': 'admin-logs', '/login': 'login', '/signin': 'login', '/register': 'register', '/signup': 'register',
   '/dashboard': 'dashboard', '/products': 'products', '/sms': 'sms', '/deposit': 'deposit', '/fund-crypto': 'fund-crypto',
-  '/transactions': 'transactions', '/orders': 'orders', '/profile': 'profile', '/api-access': 'api-access' };
+  '/transactions': 'transactions', '/orders': 'orders', '/profile': 'profile', '/api-access': 'api-access', '/tempmail': 'tempmail' };
 Object.keys(RADO_PAGES).forEach(route => app.get(route, (req, res) => {
   res.set('Cache-Control', 'no-store, must-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'rado', RADO_PAGES[route] + '.html'));
@@ -1077,6 +1077,9 @@ app.get('/api/admin/providers/status', anyAdminAuth, async (req, res) => {
     res.json({ providers: rows, readyCount: rows.filter(x => x.ready).length, checkedAt: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Could not check provider readiness.' }); }
 });
+// Temp Email (OTP emails via SMS-COOL) - customer page /tempmail + Admin -> Temp Email (lib/tempmail.js)
+try { require('./lib/tempmail').register(app, { mongoose, User, Transaction, auth, adminAuth }); }
+catch (e) { console.error('[tempmail] could not start:', e.message); }
 // Welcome popup (WhatsApp channel promo) - settings editable in Admin -> Welcome Popup
 require('./lib/welcomepopup').register(app, { mongoose, adminAuth });
 function sanitizeUser(u) {

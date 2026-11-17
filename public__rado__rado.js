@@ -20,7 +20,7 @@ W.api=async(url,method,body)=>{
 };
 let BRAND={name:'Rado Social Hub'};
 const NAV=[
- ['Dashboard','/dashboard','▦'],['Products','/products','🛒'],['Categories',null,'☰','cats'],['SMS Numbers','/sms','📞'],
+ ['Dashboard','/dashboard','▦'],['Products','/products','🛒'],['Categories',null,'☰','cats'],['SMS Numbers','/sms','📞'],['Temp Email','/tempmail','✉'],
  ['Wallet',null,'👛','wallet'],['Orders','/orders','↺'],['Account','/profile','◉'],['API','/api-access','🔑']];
 W.logoHtml=()=>`<a class="logo" href="/dashboard"><img src="/rado/rado-logo.png" alt="Rado Social Hub"></a>`;
 W.initShell=async function(active,opts){
