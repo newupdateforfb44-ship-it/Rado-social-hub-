@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Temp Email — Rado Social Hub</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/rado/rado.css"><style>
+.te-state{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:#fef3c7;color:#92400e}
+.te-state i{width:9px;height:9px;border-radius:50%;background:currentColor;animation:tep 1.2s ease-in-out infinite}
+.te-state.done{background:#dcfce7;color:#166534}.te-state.done i{animation:none}
+.te-state.closed{background:#e5e7eb;color:#4b5563}.te-state.closed i{animation:none}
+@keyframes tep{50%{opacity:.25}}
+.te-order{border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 14px;background:#fff}
+.te-order .sv{font-size:19px;font-weight:600;margin:10px 0 8px;word-break:break-word}
+.te-mail{font-size:20px;font-weight:700;word-break:break-all;background:var(--bg);border-radius:10px;padding:12px 14px;margin:0 0 10px}
+.te-meta{font-size:15px;color:var(--muted);line-height:1.6}
+.te-code{margin:12px 0 0;background:#ecfdf3;border-radius:12px;padding:14px;text-align:center}
+.te-code small{display:block;font-size:15px;color:#166534}
+.te-code b{display:block;font-size:34px;letter-spacing:5px;margin:4px 0 10px;color:#14532d;word-break:break-all}
+.te-act{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.te-act .btn{padding:10px 16px;font-size:16px}
+.te-act .red{background:#dc2626}
+.te-help{margin:0;padding-left:22px;font-size:18px;line-height:1.7}
+</style></head><body><main id="app"><h1>Temp Email</h1>
+<div class="card"><h2>Buy Email</h2>
+<p class="muted" style="font-size:18px;margin:0 0 4px">Get a temporary email, use it on a website, and receive the verification code here. Paid from your wallet.</p>
+<div id="bm" class="msg"></div>
+<div id="off" class="alert" style="display:none">Temp Email is switched off right now. Please check back later.</div>
+<div id="form">
+<label>1. Email Type</label>
+<select id="type"><option value="1">Server 1 — Gmail (pick the service)</option><option value="2">Server 2 — Outlook &amp; more (pick the website)</option></select>
+<div id="t1"><label>2. Mail Domain</label><select id="d1"></select>
+<label>3. Select Service</label><select id="svc1" disabled><option value="">Loading…</option></select></div>
+<div id="t2" style="display:none"><label>2. Website That Will Send The Code</label><select id="site"></select>
+<input id="siteOther" placeholder="example.com" maxlength="60" style="display:none;margin-top:10px" autocapitalize="none" autocomplete="off" spellcheck="false">
+<label>3. Mail Domain</label><select id="svc2" disabled><option value="">Loading…</option></select></div>
+<div id="price" class="muted" style="font-size:19px;margin:16px 0 0"></div>
+<br><button class="btn block" id="buy" disabled>✉️&nbsp; Buy Email</button></div></div>
+<div class="card"><h2>My Emails</h2><p class="muted" style="font-size:17px;margin:0 0 14px">Your code appears here automatically — no refresh needed.</p><div id="orders"><div class="empty" style="font-size:20px;padding:24px 0">Loading…</div></div></div>
+<div class="card warnbox"><h2>How It Works &amp; Refund Rules</h2><ol class="te-help">
+<li>Your wallet is charged when you buy, and the email address is reserved for you.</li>
+<li>Use the address on the website, then wait here for the code (checked every few seconds).</li>
+<li>No code yet? Tap <b>Cancel &amp; Refund</b> and you are refunded right away.</li>
+<li>If no code arrives and the email expires, you are refunded automatically.</li>
+<li>Once a code has been delivered, the email can no longer be cancelled or refunded.</li></ol></div>
+</main><script src="/rado/rado.js"></script><script>(async()=>{
+const user=await initShell('Temp Email',{title:'Temp Email'});if(!user)return;
+const HOST=/^[a-z0-9]([a-z0-9.-]{1,58})[a-z0-9]$/;
+let opt={domains1:[],sites:[]},items=[],orders=[],timer=null,busy=false;
+const type=()=>$('#type').value;
+const bm=(t)=>{const m=$('#bm');m.textContent=t||'';m.className='msg'+(t?' err':'')};
+const err=e=>{if(!e.shown)notify(e.message,'err')};
+function copyText(t,done){try{navigator.clipboard.writeText(String(t||''));notify(done,'ok',{ms:1800})}catch(e){showInfo('Copy this',String(t||''))}}
+function fillItems(sel,list,empty){sel.innerHTML=list.length?'<option value="">Choose…</option>'+list.map(i=>`<option value="${esc(i.id)}" ${i.count>0?'':'disabled'}>${esc(i.name)} — ${naira(i.price)}${i.count>0?' · '+i.count+' in stock':' · out of stock'}</option>`).join(''):`<option value="">${esc(empty)}</option>`;sel.disabled=!list.length}
+function cur(){const sel=type()==='1'?$('#svc1'):$('#svc2');return items.find(x=>x.id===sel.value)}
+function updatePrice(){const i=cur();$('#price').innerHTML=i?'Price: <b>'+esc(naira(i.price))+'</b>':'Choose an option to see its price.';$('#buy').disabled=busy||!i||!(i.count>0)}
+function setType(){const t=type();$('#t1').style.display=t==='1'?'':'none';$('#t2').style.display=t==='2'?'':'none';items=[];updatePrice();t==='1'?loadItems1():loadItems2()}
+async function loadItems1(){const d=$('#d1').value;bm('');$('#svc1').disabled=true;$('#svc1').innerHTML='<option value="">Loading…</option>';
+ try{const l=await api('/api/rado/tempmail/services?server=1&domain='+encodeURIComponent(d));if($('#d1').value!==d||type()!=='1')return;items=l;fillItems($('#svc1'),items,'Nothing available')}
+ catch(e){$('#svc1').innerHTML='<option value="">Could not load</option>';bm(e.message)}updatePrice()}
+function siteVal(){return $('#site').value==='__other'?$('#siteOther').value.trim().toLowerCase():$('#site').value}
+async function loadItems2(){const s=siteVal();bm('');$('#svc2').disabled=true;
+ if(!HOST.test(s)){$('#svc2').innerHTML='<option value="">Enter the website first</option>';items=[];updatePrice();return}
+ $('#svc2').innerHTML='<option value="">Loading…</option>';
+ try{const l=await api('/api/rado/tempmail/services?server=2&site='+encodeURIComponent(s));if(siteVal()!==s||type()!=='2')return;items=l;fillItems($('#svc2'),items,'Nothing available')}
+ catch(e){$('#svc2').innerHTML='<option value="">Could not load</option>';bm(e.message)}updatePrice()}
+const isOpen=o=>['active','pending'].includes(o.status)&&!o.code;
+function orderHtml(o){
+ const got=!!o.code||o.status==='received',closed=got||['cancelled','refunded','failed'].includes(o.status);
+ const label=got?'Code received':closed?o.status:'Waiting for code';
+ return `<div class="te-order" id="order-${esc(o.id)}"><span class="te-state ${got?'done':closed?'closed':''}"><i></i>${esc(label)}</span>
+ <div class="sv">${esc(o.service)}${o.site?' · '+esc(o.site):''}</div>
+ <div class="te-mail">${esc(o.email||'Preparing…')}</div>
+ <div class="te-meta">Price: <b>${esc(naira(o.price))}</b> · ${esc(new Date(o.createdAt).toLocaleString())}</div>
+ ${got?`<div class="te-code"><small>Your verification code</small><b>${esc(o.code)}</b><button type="button" class="btn green" data-cc="${esc(o.id)}">Copy code</button></div>`:''}
+ <div class="te-act"><button type="button" class="btn sand" data-ce="${esc(o.id)}" ${o.email?'':'disabled'}>Copy email</button>${closed?'':`<button type="button" class="btn" data-chk="${esc(o.id)}">Check code</button>`}${!closed&&o.canCancel?`<button type="button" class="btn red" data-can="${esc(o.id)}">Cancel &amp; Refund</button>`:''}</div></div>`}
+function renderOrders(){const el=$('#orders');
+ if(!orders.length){el.innerHTML='<div class="empty" style="font-size:20px;padding:24px 0">No emails yet.</div>';return}
+ el.innerHTML=orders.map(orderHtml).join('')}
+$('#orders').addEventListener('click',e=>{
+ const g=a=>{const b=e.target.closest('['+a+']');return b?b.getAttribute(a):null};
+ let id;
+ if((id=g('data-cc')))return copyText((orders.find(o=>o.id===id)||{}).code,'Code copied');
+ if((id=g('data-ce')))return copyText((orders.find(o=>o.id===id)||{}).email,'Email copied');
+ if((id=g('data-chk')))return checkOne(id);
+ if((id=g('data-can')))return cancelOne(id)});
+async function loadOrders(){try{orders=await api('/api/rado/tempmail/orders');renderOrders();schedule()}catch(e){$('#orders').innerHTML='<div class="empty" style="font-size:18px">'+esc(e.message)+'</div>'}}
+function schedule(){clearInterval(timer);if(orders.some(isOpen))timer=setInterval(()=>{if(!document.hidden)orders.filter(isOpen).forEach(o=>checkOne(o.id,true))},4000)}
+async function checkOne(id,silent){try{const d=await api('/api/rado/tempmail/code/'+encodeURIComponent(id));const i=orders.findIndex(o=>o.id===id);
+  if(i>=0){const was=orders[i];orders[i]=d.order;if(JSON.stringify(was)!==JSON.stringify(d.order)){renderOrders();
+   if(d.order.code&&!was.code)notify('Your code has arrived!','ok',{title:'Code received'});
+   if(d.order.status==='cancelled'&&was.status!=='cancelled')notify('The email expired and you were refunded.','info');schedule()}}}
+ catch(e){if(!silent)err(e)}}
+async function cancelOne(id){const o=orders.find(x=>x.id===id);if(!o)return;
+ if(!await askConfirm('This email will be cancelled and the amount returned to your wallet.',{title:'Cancel & refund?',okText:'Yes, cancel & refund',cancelText:'Keep email',danger:true,rows:[['Email',o.email||'-'],['Refund',naira(o.price)]]}))return;
+ try{const c=await api('/api/rado/tempmail/cancel/'+encodeURIComponent(id),'POST');const i=orders.findIndex(x=>x.id===id);if(i>=0)orders[i]=c.order;renderOrders();schedule();notify(naira(o.price)+' has been refunded to your wallet.','ok')}catch(e){err(e)}}
+$('#buy').onclick=async()=>{const i=cur();if(!i||busy)return;const t=type();
+ const where=t==='1'?$('#d1').value:siteVal();
+ if(!await askConfirm('The amount will be deducted from your wallet balance.',{title:'Confirm purchase',okText:'Pay '+naira(i.price),rows:[['Email',t==='1'?i.name+' ('+where+')':i.id],t==='1'?null:['Website',where],['Price',naira(i.price)]].filter(Boolean)}))return;
+ busy=true;const btn=$('#buy'),o=btn.innerHTML;btn.disabled=true;btn.textContent='Getting your email…';
+ try{const body=t==='1'?{server:1,serviceId:i.id,domain:$('#d1').value}:{server:2,domain:i.id,site:siteVal()};body.clientRef=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2));
+  const d=await api('/api/rado/tempmail/buy','POST',body);
+  notify(d.pending?d.message:'Email ready. Use it now — your code will appear below.',d.pending?'info':'ok');
+  if(typeof d.balance==='number'){try{const w=document.querySelector('[data-balance]');if(w)w.textContent=naira(d.balance)}catch(x){}}
+  await loadOrders();const id=d.order&&d.order.id;if(id)setTimeout(()=>{const el=document.getElementById('order-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},150)}
+ catch(e){err(e)}
+ finally{busy=false;btn.innerHTML=o;updatePrice()}};
+$('#type').onchange=setType;$('#d1').onchange=loadItems1;$('#svc1').onchange=updatePrice;$('#svc2').onchange=updatePrice;
+$('#site').onchange=()=>{$('#siteOther').style.display=$('#site').value==='__other'?'':'none';loadItems2()};
+$('#siteOther').onchange=loadItems2;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)orders.filter(isOpen).forEach(o=>checkOne(o.id,true))});
+try{opt=await api('/api/rado/tempmail/options')}catch(e){$('#form').style.display='none';if(/unavailable|switched/i.test(e.message)){$('#off').style.display='';}else{bm(e.message)}$('#orders').innerHTML='';await loadOrders();return}
+$('#d1').innerHTML=opt.domains1.map(d=>`<option>${esc(d)}</option>`).join('');
+$('#site').innerHTML=opt.sites.map(d=>`<option>${esc(d)}</option>`).join('')+'<option value="__other">Other website…</option>';
+setType();await loadOrders();
+})();</script></body></html>

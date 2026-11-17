@@ -12,12 +12,15 @@ W.api=async(url,method,body)=>{
   const r=await fetch(url,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined});
   let d={};try{d=await r.json()}catch(e){}
   if(r.status===401&&t){logout();throw new Error('Session expired')}
-  if(!r.ok)throw new Error(d.error||d.message||'Request failed');
+  if(!r.ok){const msg=d.error||d.message||'Request failed';const err=new Error(msg);
+    if(/insufficient/i.test(msg)){err.insufficient=true;err.shown=true;err.message='Insufficient balance. Please fund your wallet.';
+      if(W.notify)W.notify('Please fund your wallet to continue.','warn',{title:'Insufficient balance'})}
+    throw err}
   return d;
 };
 let BRAND={name:'Rado Social Hub'};
 const NAV=[
- ['Dashboard','/dashboard','▦'],['Products','/products','🛒'],['Categories',null,'☰','cats'],['SMS Numbers','/sms','📞'],
+ ['Dashboard','/dashboard','▦'],['Products','/products','🛒'],['Categories',null,'☰','cats'],['SMS Numbers','/sms','📞'],['Temp Email','/tempmail','✉'],
  ['Wallet',null,'👛','wallet'],['Orders','/orders','↺'],['Account','/profile','◉'],['API','/api-access','🔑']];
 W.logoHtml=()=>`<a class="logo" href="/dashboard"><img src="/rado/rado-logo.png" alt="Rado Social Hub"></a>`;
 W.initShell=async function(active,opts){
@@ -97,4 +100,99 @@ window.orderRow=function(r,withView){const i=(window.__rows||[]).indexOf(r);
     }).catch(function(){});
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+})();
+
+/* Floating banners + confirmation cards (replace the browser's plain pop-ups).
+   notify(msg,'ok'|'err'|'warn'|'info',{title,ms})   askConfirm(msg,{title,okText,cancelText,danger,rows}) -> Promise<boolean>
+   showInfo(title,text)  -> card with the text and a Copy button.   alert() now shows a banner too. */
+(function(){
+  if(window.__radoNotify)return;window.__radoNotify=1;
+  const W=window;
+  const IC={
+    ok:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.6 2.6L16 9.5"/></svg>',
+    err:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+    warn:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18.2v.1"/></svg>',
+    info:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.1"/></svg>'
+  };
+  const TITLE={ok:'Success',err:'Something went wrong',warn:'Heads up',info:'Notice'};
+  function kind(msg,t){
+    t=String(t||'').toLowerCase();
+    if(t==='ok'||t==='success')return'ok';
+    if(t==='err'||t==='error')return'err';
+    if(t==='warn'||t==='warning')return'warn';
+    if(t==='info')return'info';
+    const m=String(msg||'');
+    if(/fail|error|invalid|insufficient|could not|cannot|can.t|unable|not available|not set up|denied|wrong|expired|rejected/i.test(m))return'err';
+    if(/success|successful|copied|saved|done|credited/i.test(m))return'ok';
+    return'info';
+  }
+  let host=null;
+  function getHost(){
+    if(host&&document.body&&document.body.contains(host))return host;
+    host=document.createElement('div');host.className='rn-host';host.setAttribute('aria-live','polite');
+    (document.body||document.documentElement).appendChild(host);return host;
+  }
+  W.notify=function(msg,type,opts){
+    opts=opts||{};
+    const k=kind(msg,type),h=getHost(),el=document.createElement('div');
+    el.className='rn-b rn-'+k;el.setAttribute('role',k==='err'?'alert':'status');
+    const ms=opts.ms||(k==='err'||k==='warn'?6500:4200);
+    el.innerHTML='<span class="rn-ic">'+IC[k]+'</span><div class="rn-tx"><div class="rn-tt"></div><div class="rn-ms"></div></div><button type="button" class="rn-x" aria-label="Close">&times;</button><i class="rn-bar"></i>';
+    el.querySelector('.rn-tt').textContent=opts.title||TITLE[k];
+    el.querySelector('.rn-ms').textContent=String(msg==null?'':msg).trim();
+    el.querySelector('.rn-bar').style.animationDuration=ms+'ms';
+    h.appendChild(el);
+    while(h.children.length>3)h.removeChild(h.firstChild);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('rn-in')));
+    let gone=false;function close(){if(gone)return;gone=true;el.classList.remove('rn-in');setTimeout(()=>el.remove(),300)}
+    el.querySelector('.rn-x').onclick=close;setTimeout(close,ms);
+    return{close};
+  };
+  function card(build){
+    return new Promise(resolve=>{
+      const back=document.createElement('div');back.className='rn-back';
+      const c=document.createElement('div');c.className='rn-card';c.setAttribute('role','alertdialog');c.setAttribute('aria-modal','true');
+      back.appendChild(c);(document.body||document.documentElement).appendChild(back);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>back.classList.add('rn-in')));
+      let done=false;
+      function finish(v){if(done)return;done=true;document.removeEventListener('keydown',key);back.classList.remove('rn-in');setTimeout(()=>back.remove(),220);resolve(v)}
+      function key(e){if(e.key==='Escape')finish(false)}
+      document.addEventListener('keydown',key);
+      back.addEventListener('click',e=>{if(e.target===back)finish(false)});
+      build(c,finish);
+    });
+  }
+  W.askConfirm=function(msg,opts){
+    opts=opts||{};
+    return card((c,finish)=>{
+      const danger=!!opts.danger;
+      c.innerHTML='<div class="rn-ci'+(danger?' rn-danger':'')+'">'+IC[danger?'warn':'info']+'</div><h3 class="rn-ct"></h3><p class="rn-cm"></p><div class="rn-rows"></div><div class="rn-cb"><button type="button" class="rn-btn rn-no"></button><button type="button" class="rn-btn rn-yes'+(danger?' rn-danger':'')+'"></button></div>';
+      c.querySelector('.rn-ct').textContent=opts.title||'Please confirm';
+      c.querySelector('.rn-cm').textContent=String(msg||'');
+      const rows=c.querySelector('.rn-rows');
+      (opts.rows||[]).forEach(r=>{const d=document.createElement('div');d.className='rn-row';const a=document.createElement('span'),b=document.createElement('b');a.textContent=r[0];b.textContent=r[1];d.appendChild(a);d.appendChild(b);rows.appendChild(d)});
+      if(!(opts.rows&&opts.rows.length))rows.remove();
+      const no=c.querySelector('.rn-no'),yes=c.querySelector('.rn-yes');
+      no.textContent=opts.cancelText||'Cancel';yes.textContent=opts.okText||'Confirm';
+      no.onclick=()=>finish(false);yes.onclick=()=>finish(true);
+      setTimeout(()=>{try{yes.focus()}catch(e){}},60);
+    });
+  };
+  W.showInfo=function(title,text){
+    return card((c,finish)=>{
+      c.classList.add('rn-wide');
+      c.innerHTML='<h3 class="rn-ct"></h3><pre class="rn-pre"></pre><div class="rn-cb"><button type="button" class="rn-btn rn-no">Close</button><button type="button" class="rn-btn rn-yes">Copy</button></div>';
+      c.querySelector('.rn-ct').textContent=title||'Details';
+      const pre=c.querySelector('.rn-pre');pre.textContent=String(text==null?'':text);
+      c.querySelector('.rn-no').onclick=()=>finish(true);
+      const cp=c.querySelector('.rn-yes');
+      cp.onclick=()=>{
+        const t=pre.textContent;
+        const ok=()=>{W.notify('Copied to clipboard','ok',{ms:2200})};
+        if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,()=>{});
+        else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok()}catch(e){}ta.remove()}
+      };
+    });
+  };
+  try{W.alert=function(m){W.notify(m)}}catch(e){}
 })();
