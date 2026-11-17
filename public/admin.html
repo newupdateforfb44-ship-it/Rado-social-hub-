@@ -576,6 +576,48 @@ tr:hover td{background:rgba(255,255,255,.035)}
 
 
 
+<div id="tab-tempmail" class="tab-panel">
+      <div class="sec">
+        <div class="sec-title"><svg class="icon i-mail" aria-hidden="true"><use href="#i-mail"/></svg> Temp Email Settings</div>
+        <div class="info-box"><svg class="icon i-pin" aria-hidden="true"><use href="#i-pin"/></svg>
+          Customers rent a temporary email for a website and receive the verification code on the site (customer menu &rarr; Temp Email).
+          Powered by the SMS-COOL API. Customers are charged from their wallet and refunded automatically when no code arrives.</div>
+        <div id="tmaStatus" style="font-size:13px;color:var(--t2);margin-bottom:12px">Loading…</div>
+        <div class="form-row"><div class="fg"><label>Temp Email status</label>
+          <button class="btn-gold" type="button" id="tmaToggle" onclick="tmaToggle()" style="width:100%">…</button></div></div>
+        <div class="form-row">
+          <div class="fg"><label>SMS-COOL API key <span style="font-weight:400;color:var(--t3)">(leave empty to keep the saved one)</span></label>
+            <input type="password" id="tmaKey" placeholder="Paste API key" autocomplete="new-password"/></div>
+          <div class="fg"><label>Provider balance</label>
+            <div style="display:flex;gap:8px;align-items:center"><span id="tmaBal" style="font-size:13px;color:var(--t2)">—</span>
+            <button class="btn-gold btn-sm" type="button" onclick="tmaBalance()" style="width:auto">Check</button></div></div>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label>Markup per email (&#8358;, added to provider cost)</label><input type="number" id="tmaMkNgn" min="0" step="1"/></div>
+          <div class="fg"><label>Markup percent (%)</label><input type="number" id="tmaMkPct" min="0" max="1000" step="0.5"/></div>
+        </div>
+        <div class="fg"><label>Server 1 mail domains <span style="font-weight:400;color:var(--t3)">(one per line)</span></label>
+          <textarea id="tmaDomains" rows="3" placeholder="gmail.com"></textarea></div>
+        <div class="fg"><label>Server 2 websites customers can pick <span style="font-weight:400;color:var(--t3)">(one per line)</span></label>
+          <textarea id="tmaSites" rows="6" placeholder="telegram.com"></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn-gold" type="button" onclick="tmaSave()" style="width:auto">Save Settings</button>
+          <span id="tmaSaveMsg" role="status" style="font-size:12.5px"></span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title"><svg class="icon i-receipt" aria-hidden="true"><use href="#i-receipt"/></svg> Email Orders</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <input type="text" id="tmaQ" placeholder="Search customer, email or service" oninput="tmaRender()" style="flex:1;min-width:180px"/>
+          <button class="btn-gold btn-sm" type="button" onclick="tmaOrders()" style="width:auto">Refresh</button>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Date</th><th>Customer</th><th>Service</th><th>Email</th><th>Price</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tmaBody"><tr><td colspan="7" style="text-align:center;padding:24px"></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
 <div id="tab-welcomepopup" class="tab-panel">
       <div class="sec">
         <div class="sec-title"><svg class="icon i-zap" aria-hidden="true"><use href="#i-zap"/></svg> Welcome Popup Settings</div>
@@ -1154,6 +1196,7 @@ const ADMIN_NAV = [
   ]},
   { group:'Site', items:[
     { tab:'sitelinks',    icon:'i-link', label:'WhatsApp & Telegram contacts' },
+    { tab:'tempmail',     icon:'i-mail', label:'Temp Email (provider, prices, orders)', owner:true, keywords:'temp mail email otp code verification temporary sms-cool refund' },
     { tab:'welcomepopup', icon:'i-zap',  label:'Join-WhatsApp popup (on/off, text)', owner:true, keywords:'welcome popup whatsapp channel announcement message' },
     { tab:'ops',          icon:'i-zap', label:'Control room (maintenance, limits, backup)', owner:true, keywords:'maintenance close site deposits limits test gateway daily summary email backup errors' },
   ]},
@@ -1237,6 +1280,7 @@ function switchTab(name,el) {
   markAdminNavActive(name);
   if(name==='dashboard')    loadDashboard();
   if(name==='welcomepopup') { wpLoad(); }
+  if(name==='tempmail')     { tmaLoad(); }
   if(name==='users')        { loadUsers(); loadActiveUsersAdmin(); }
   if(name==='credit')       { loadAllUsersFor('qcBody'); refreshCreditUsers(); }
   if(name==='transactions') loadTxns();
@@ -2403,6 +2447,58 @@ async function wpReset(){
 }
 function wpClearMemory(){ if(window.RSHWelcomePopup){ window.RSHWelcomePopup.clearBrowserMemory(); alert('Done. The popup can show again in this browser (if it is enabled and the frequency allows).'); } }
 
+
+// ── Temp Email (admin) ──
+let tmaOn=true, tmaRows=[];
+const tmaEl=id=>document.getElementById(id);
+const tmaEsc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tmaMoney=n=>'₦'+Number(n||0).toLocaleString();
+function tmaRenderToggle(){ const b=tmaEl('tmaToggle'); b.textContent = tmaOn ? 'Temp Email is ON — tap to switch off' : 'Temp Email is OFF — tap to switch on'; b.style.background = tmaOn ? '' : 'var(--red)'; }
+function tmaToggle(){ tmaOn=!tmaOn; tmaRenderToggle(); }
+function tmaFlash(id,text,ok){ const e=tmaEl(id); e.textContent=text||''; e.style.color = ok ? 'var(--green)' : 'var(--red)'; if(text) setTimeout(()=>{ if(e.textContent===text) e.textContent=''; }, 6000); }
+const tmaLines=v=>String(v||'').split(/[\n,]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+async function tmaLoad(){
+  try {
+    const c=await aFetch('/api/admin/tempmail/status');
+    tmaOn=!!c.enabled; tmaRenderToggle();
+    tmaEl('tmaMkNgn').value=c.markupNgn; tmaEl('tmaMkPct').value=c.markupPercent;
+    tmaEl('tmaDomains').value=(c.emailDomains1||[]).join('\n'); tmaEl('tmaSites').value=(c.emailSites||[]).join('\n');
+    tmaEl('tmaStatus').innerHTML = c.configured ? '<span style="color:var(--green)">API key is set.</span> Provider: '+tmaEsc(c.baseUrl) : '<span style="color:var(--red)">No API key yet — paste it below and save, or set SMS_COOL_API_KEY in Render.</span>';
+    tmaEl('tmaKey').value='';
+  } catch(e){ tmaEl('tmaStatus').textContent='Could not load Temp Email: '+e.message; }
+  tmaOrders();
+}
+async function tmaSave(){
+  const body={ enabled:tmaOn, markupNgn:tmaEl('tmaMkNgn').value, markupPercent:tmaEl('tmaMkPct').value, emailDomains1:tmaLines(tmaEl('tmaDomains').value), emailSites:tmaLines(tmaEl('tmaSites').value) };
+  const k=tmaEl('tmaKey').value.trim(); if(k) body.apiKey=k;
+  try { await aFetch('/api/admin/tempmail/config','PUT',body); tmaFlash('tmaSaveMsg','Saved.',true); tmaLoad(); }
+  catch(e){ tmaFlash('tmaSaveMsg','Not saved: '+e.message,false); }
+}
+async function tmaBalance(){
+  const el=tmaEl('tmaBal'); el.textContent='Checking…';
+  try { const d=await aFetch('/api/admin/tempmail/balance'); el.textContent=tmaMoney(d.balance)+' ($'+Number(d.balanceUsd||0).toFixed(2)+')'; el.style.color='var(--t2)'; }
+  catch(e){ el.textContent=e.message; el.style.color='var(--red)'; }
+}
+async function tmaOrders(){
+  try { tmaRows=await aFetch('/api/admin/tempmail/orders'); } catch(e){ tmaEl('tmaBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--red)">'+tmaEsc(e.message)+'</td></tr>'; return; }
+  tmaRender();
+}
+function tmaRender(){
+  const q=tmaEl('tmaQ').value.trim().toLowerCase();
+  const rows=tmaRows.filter(r=>!q||[r.userEmail,r.email,r.service,r.status].some(x=>String(x||'').toLowerCase().includes(q)));
+  tmaEl('tmaBody').innerHTML = rows.length ? rows.map(r=>{
+    const canRefund=!r.refunded && !r.code && r.status!=='received' && r.status!=='refunded' && r.status!=='cancelled';
+    return `<tr><td>${tmaEsc(new Date(r.createdAt).toLocaleString())}</td><td style="word-break:break-all">${tmaEsc(r.userEmail||'—')}</td><td>${tmaEsc(r.service)}</td><td style="word-break:break-all">${tmaEsc(r.email||'—')}${r.code?'<br><b>'+tmaEsc(r.code)+'</b>':''}</td><td>${tmaMoney(r.price)}</td>`
+      +`<td><span class="badge">${tmaEsc(r.status)}</span>${r.lastError?'<div style="font-size:11px;color:var(--t3);max-width:200px">'+tmaEsc(r.lastError)+'</div>':''}</td>`
+      +`<td>${canRefund?`<button class="btn-del btn-sm" type="button" data-ref="${tmaEsc(r.id)}">Refund</button>`:''}</td></tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--t3)">No email orders yet.</td></tr>';
+  tmaEl('tmaBody').querySelectorAll('[data-ref]').forEach(b=>b.onclick=()=>tmaRefund(b.dataset.ref));
+}
+async function tmaRefund(id){
+  if(!confirm('Refund this customer to their wallet? Only do this if no code was delivered.')) return;
+  try { const r=await aFetch('/api/admin/tempmail/orders/'+encodeURIComponent(id)+'/refund','POST'); alert('Refunded '+tmaMoney(r.refunded)+' to the customer.'); tmaOrders(); }
+  catch(e){ alert(e.message); }
+}
 </script>
 <script>window.RSH_NO_WELCOME_AUTOSTART=true;</script>
 <script src="/welcome-popup.js?v=2" defer></script>
